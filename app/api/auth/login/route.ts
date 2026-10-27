@@ -34,7 +34,10 @@ export async function POST(req: NextRequest) {
     loginAttempts.set(key, attempts);
 
     const { username, password } = parsed.data;
-    const users = await query<any>("SELECT Id, Username, PasswordHash FROM dbo.Users WHERE Username = @username", { username });
+    const users = await query<{ Id: number; Username: string; PasswordHash: string }>(
+      "SELECT Id, Username, PasswordHash FROM dbo.Users WHERE Username = @username",
+      { username }
+    );
     if (users.length === 0) {
       await new Promise((r) => setTimeout(r, 500));
       return NextResponse.json({ error: "Kullanıcı adı veya şifre hatalı" }, { status: 401 });
@@ -50,7 +53,7 @@ export async function POST(req: NextRequest) {
     loginAttempts.delete(key);
     await createSession(user.Id, user.Username);
     return NextResponse.json({ ok: true });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Bir hata oluştu" }, { status: 500 });
   }
 }

@@ -2,9 +2,10 @@ import sql from "mssql";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import path from "path";
+import { errorMessage } from "./utils";
 
-dotenv.config({ path: path.join(process.cwd(), ".env.local") });
-dotenv.config();
+dotenv.config({ path: path.join(process.cwd(), ".env.local"), quiet: true });
+dotenv.config({ quiet: true });
 
 async function main() {
   const args = process.argv.slice(2);
@@ -40,8 +41,8 @@ async function main() {
     }
     console.log(`Şifre güncellendi: ${username}`);
     await pool.close();
-  } catch (e: any) {
-    console.error("Hata:", e.message);
+  } catch (e) {
+    console.error("Hata:", errorMessage(e));
     process.exit(1);
   }
 }

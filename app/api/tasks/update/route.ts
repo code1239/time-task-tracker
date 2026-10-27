@@ -36,13 +36,13 @@ export async function POST(req: NextRequest) {
 
     // Fetch updated count
     const { query } = await import("@/lib/db");
-    const rows = await query<any>(
+    const rows = await query<{ Count: number }>(
       "SELECT Count FROM dbo.DailyTaskCounts WHERE UserId = @userId AND CountDate = @date",
       { userId: session.userId, date: today }
     );
 
     return NextResponse.json({ count: rows.length > 0 ? rows[0].Count : 0 });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Bir hata oluştu" }, { status: 500 });
   }
 }

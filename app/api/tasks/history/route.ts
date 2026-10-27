@@ -25,11 +25,11 @@ export async function GET(req: NextRequest) {
   }
 
   // Build query with LEFT JOIN
-  const dateParams: any = {};
+  const dateParams: Record<string, string> = {};
   const unions = dates
     .map((dt, idx) => {
       dateParams[`d${idx}`] = dt;
-      return `SELECT @d${idx} AS CountDate`;
+      return `SELECT CAST(@d${idx} AS date) AS CountDate`;
     })
     .join(" UNION ALL ");
 
@@ -41,6 +41,16 @@ export async function GET(req: NextRequest) {
     ORDER BY dr.CountDate
   `;
 
-  const rows = await query<any>(sql, { userId: session.userId, ...dateParams });
-  return NextResponse.json({ data: rows, today });
+  const rows = await query<{ CountDate: Date | string; Count: number }>(sql, {
+    userId: session.userId,
+    ...dateParams,
+  });
+  const data = rows.map((row) => ({
+    date:
+      row.CountDate instanceof Date
+        ? row.CountDate.toISOString().slice(0, 10)
+        : String(row.CountDate).slice(0, 10),
+    count: row.Count,
+  }));
+  return NextResponse.json({ data, today });
 }

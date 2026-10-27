@@ -8,7 +8,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
   const today = getIstanbulDateString(new Date());
-  const rows = await query<any>(
+  const rows = await query<{ Count: number }>(
     "SELECT Count FROM dbo.DailyTaskCounts WHERE UserId = @userId AND CountDate = @date",
     { userId: session.userId, date: today }
   );

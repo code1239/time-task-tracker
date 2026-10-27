@@ -2,9 +2,10 @@ import sql from "mssql";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import path from "path";
+import { errorMessage } from "./utils";
 
-dotenv.config({ path: path.join(process.cwd(), ".env.local") });
-dotenv.config();
+dotenv.config({ path: path.join(process.cwd(), ".env.local"), quiet: true });
+dotenv.config({ quiet: true });
 
 async function main() {
   const args = process.argv.slice(2);
@@ -36,17 +37,17 @@ async function main() {
     try {
       await request.query(`INSERT INTO dbo.Users (Username, PasswordHash) VALUES (@username, @hash)`);
       console.log(`Kullanıcı oluşturuldu: ${username}`);
-    } catch (e: any) {
-      if (e.message.includes("UNIQUE")) {
+    } catch (e) {
+      if (errorMessage(e).includes("UNIQUE")) {
         console.error("Hata: Bu kullanıcı adı zaten mevcut.");
       } else {
-        console.error("Hata:", e.message);
+        console.error("Hata:", errorMessage(e));
       }
       process.exit(1);
     }
     await pool.close();
-  } catch (e: any) {
-    console.error("Bağlantı hatası:", e.message);
+  } catch (e) {
+    console.error("Bağlantı hatası:", errorMessage(e));
     process.exit(1);
   }
 }

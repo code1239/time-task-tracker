@@ -12,7 +12,7 @@ export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
-  const rows = await query<any>(
+  const rows = await query<{ Title: string | null; TargetAt: Date; UpdatedAt: Date }>(
     "SELECT Title, TargetAt, UpdatedAt FROM dbo.Countdowns WHERE UserId = @userId",
     { userId: session.userId }
   );
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     );
 
     return NextResponse.json({ ok: true });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Bir hata oluştu" }, { status: 500 });
   }
 }

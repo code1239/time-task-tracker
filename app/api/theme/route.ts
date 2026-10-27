@@ -28,6 +28,9 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
   const { query } = await import("@/lib/db");
-  const rows = await query<any>("SELECT ThemePreference FROM dbo.Users WHERE Id = @userId", { userId: session.userId });
+  const rows = await query<{ ThemePreference: "light" | "dark" | "system" | null }>(
+    "SELECT ThemePreference FROM dbo.Users WHERE Id = @userId",
+    { userId: session.userId }
+  );
   return NextResponse.json({ theme: rows[0]?.ThemePreference || "system" });
 }

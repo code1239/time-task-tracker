@@ -21,3 +21,7 @@ export function updateEnvLocal(key: string, value: string) {
   }
   fs.writeFileSync(envPath, content);
 }
+
+export function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
