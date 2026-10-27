@@ -40,6 +40,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const interacted = useRef(false);
 
+  // Theme must be applied after mount: localStorage and the OS preference are
+  // only available in the browser. The inline script in <head> already painted
+  // the correct theme; this effect syncs React state with it.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const dark = systemPrefersDark();
     setSystemDark(dark);
@@ -49,21 +53,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setThemeState(initial);
     applyTheme(initial, dark);
     setReady(true);
-
-    // Server-side preference wins on a fresh device, localStorage wins if it exists.
-    fetch("/api/theme", { cache: "no-store" })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (!data?.theme || interacted.current) return;
-        if (stored) return;
-        const next = data.theme as Theme;
-        if (next !== "light" && next !== "dark" && next !== "system") return;
-        setThemeState(next);
-        window.localStorage.setItem(THEME_STORAGE_KEY, next);
-        applyTheme(next, systemPrefersDark());
-      })
-      .catch(() => {});
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (!ready) return;
