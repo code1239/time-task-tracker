@@ -1,0 +1,44 @@
+{
+  "name": "time-task-tracker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "db:setup": "tsx scripts/db-setup.ts",
+    "user:create": "tsx scripts/user-create.ts",
+    "user:reset-password": "tsx scripts/user-reset-password.ts",
+    "user:list": "tsx scripts/user-list.ts"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "canvas-confetti": "^1.9.4",
+    "date-fns-tz": "^3.2.0",
+    "dotenv": "^18.0.9",
+    "jose": "^6.2.13",
+    "motion": "^14.7.1",
+    "mssql": "^12.7.13",
+    "next": "16.4.3",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "recharts": "^3.10.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "^4",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/mssql": "^12.3.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.3",
+    "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.23.15",
+    "typescript": "^5"
+  }
+}
