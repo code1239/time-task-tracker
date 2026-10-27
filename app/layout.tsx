@@ -38,6 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="tr"
       suppressHydrationWarning
+      data-scroll-behavior="smooth"
       className={`${inter.variable} ${geistMono.variable}`}
     >
       <head>
