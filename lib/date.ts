@@ -1,40 +1,78 @@
-import { formatInTimeZone, toZonedTime } from "date-fns-tz";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 
-const TIMEZONE = "Europe/Istanbul";
-
-export function getIstanbulNow(): Date {
-  return toZonedTime(new Date(), TIMEZONE);
-}
+export const TIMEZONE = "Europe/Istanbul";
 
 export function getIstanbulDateString(date: Date = new Date()): string {
-  // Returns YYYY-MM-DD in Istanbul timezone
   return formatInTimeZone(date, TIMEZONE, "yyyy-MM-dd");
 }
 
-export function getIstanbulDate(date: Date = new Date()): Date {
-  const s = getIstanbulDateString(date);
-  // Construct date at start of Istanbul day in UTC terms for SQL DATE
-  const [y, m, d] = s.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d));
+export function getIstanbulTimeString(date: Date = new Date()): string {
+  return formatInTimeZone(date, TIMEZONE, "HH:mm");
+}
+
+export function istanbulToUtc(dateStr: string, timeStr: string): Date {
+  return fromZonedTime(`${dateStr}T${timeStr}:00`, TIMEZONE);
 }
 
 export function formatIstanbul(date: Date, fmt: string): string {
   return formatInTimeZone(date, TIMEZONE, fmt);
 }
 
-export function getIstanbulStartOfDay(date: Date = new Date()): Date {
-  const s = getIstanbulDateString(date);
-  const [y, m, d] = s.split("-").map(Number);
-  // Create midnight in Istanbul as UTC equivalent? Easier to pass date string to SQL
-  return new Date(y, m - 1, d);
+const dateFormatter = new Intl.DateTimeFormat("tr-TR", {
+  timeZone: TIMEZONE,
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  weekday: "long",
+});
+
+export function formatTurkishDate(date: Date): string {
+  const parts = dateFormatter.formatToParts(date);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("day")} ${get("month")} ${get("year")}, ${get("weekday")}`;
 }
 
-export function istanbulToUtc(dateStr: string, timeStr: string): Date {
-  // Interpret dateStr (YYYY-MM-DD) and timeStr (HH:mm) as Europe/Istanbul
-  const iso = `${dateStr}T${timeStr}:00`;
-  // date-fns-tz can parse in zone
-  const { zonedTimeToUtc } = require("date-fns-tz");
-  return zonedTimeToUtc(iso, TIMEZONE);
+const timeFormatter = new Intl.DateTimeFormat("tr-TR", {
+  timeZone: TIMEZONE,
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hourCycle: "h23",
+});
+
+export function getIstanbulTimeParts(date: Date) {
+  const parts = timeFormatter.formatToParts(date);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "00";
+  return {
+    hour: parseInt(get("hour"), 10),
+    minute: parseInt(get("minute"), 10),
+    second: parseInt(get("second"), 10),
+  };
 }
 
-export { TIMEZONE };
+export function formatIstanbulDateTime(date: Date): string {
+  return new Intl.DateTimeFormat("tr-TR", {
+    timeZone: TIMEZONE,
+    dateStyle: "long",
+    timeStyle: "short",
+  }).format(date);
+}
+
+export function formatShortDay(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  const weekday = new Intl.DateTimeFormat("tr-TR", {
+    weekday: "short",
+    timeZone: "UTC",
+  }).format(date);
+  return `${weekday} ${d}`;
+}
+
+export function addDaysToDateString(dateStr: string, days: number): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
