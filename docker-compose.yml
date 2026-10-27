@@ -1,0 +1,46 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: time-task-tracker:latest
+    container_name: time-task-tracker
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      # Varsayılan: ana makinede çalışan SQL Server.
+      # Compose'daki db profilini kullanacaksanız DB_SERVER=db verin.
+      DB_SERVER: ${DB_SERVER:-host.docker.internal}
+      DB_PORT: ${DB_PORT:-1433}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # İsteğe bağlı yerel SQL Server. Yalnızca `--profile db` ile başlar.
+  # Ana makinede 1433 doluysa çakışmamak için 14333 kullanır.
+  # Bu profili kullanırken: DB_SERVER=db, DB_PORT=1433 ve DB_ADMIN_PASSWORD tanımlı olmalı.
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    profiles: ["db"]
+    container_name: time-task-tracker-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${DB_ADMIN_PASSWORD:-}
+    ports:
+      - "14333:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+
+volumes:
+  mssql-data:
