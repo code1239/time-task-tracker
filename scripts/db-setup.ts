@@ -1,10 +1,10 @@
 import sql from "mssql";
 import dotenv from "dotenv";
 import path from "path";
-import { generatePassword, updateEnvLocal } from "./utils";
+import { errorMessage, generatePassword, updateEnvLocal } from "./utils";
 
-dotenv.config({ path: path.join(process.cwd(), ".env.local") });
-dotenv.config();
+dotenv.config({ path: path.join(process.cwd(), ".env.local"), quiet: true });
+dotenv.config({ quiet: true });
 
 async function main() {
   const adminUser = process.env.DB_ADMIN_USER;
@@ -19,8 +19,15 @@ async function main() {
     process.exit(1);
   }
 
-  let appUser = process.env.DB_USER || "ttt_app";
+  const appUser = process.env.DB_USER || "ttt_app";
   let appPass = process.env.DB_PASSWORD;
+
+  // Identifiers cannot be parameterized in T-SQL, so restrict them to a safe set.
+  const safeIdentifier = /^[A-Za-z_][A-Za-z0-9_]*$/;
+  if (!safeIdentifier.test(dbName) || !safeIdentifier.test(appUser)) {
+    console.error("Hata: DB_NAME ve DB_USER yalnızca harf, rakam ve alt çizgi içerebilir.");
+    process.exit(1);
+  }
 
   if (!appPass) {
     appPass = generatePassword(32);
@@ -42,7 +49,7 @@ async function main() {
   let masterPool: sql.ConnectionPool;
   try {
     masterPool = await new sql.ConnectionPool(masterConfig).connect();
-  } catch (e: any) {
+  } catch (e) {
     console.error("Yönetici bağlantısı başarısız.");
     console.error("Lütfen şunları kontrol edin:");
     console.error("- SQL Server çalışıyor mu?");
@@ -50,7 +57,7 @@ async function main() {
     console.error("- SQL Authentication etkin mi?");
     console.error("- Güvenlik duvarı 1433 portunu açtı mı?");
     console.error("- DB_SERVER/DB_PORT doğru mu?");
-    console.error(`Hata: ${e.message}`);
+    console.error(`Hata: ${errorMessage(e)}`);
     process.exit(1);
   }
 
@@ -78,8 +85,8 @@ async function main() {
     console.log(`SQL login hazır: ${appUser}`);
 
     await masterPool.close();
-  } catch (e: any) {
-    console.error("Veritabanı/login oluşturma hatası:", e.message);
+  } catch (e) {
+    console.error("Veritabanı/login oluşturma hatası:", errorMessage(e));
     process.exit(1);
   }
 
@@ -96,8 +103,8 @@ async function main() {
   let dbPool: sql.ConnectionPool;
   try {
     dbPool = await new sql.ConnectionPool(dbConfig).connect();
-  } catch (e: any) {
-    console.error("Hedef veritabanına bağlantı hatası:", e.message);
+  } catch (e) {
+    console.error("Hedef veritabanına bağlantı hatası:", errorMessage(e));
     process.exit(1);
   }
 
@@ -158,8 +165,8 @@ async function main() {
     console.log("Tüm tablolar hazır.");
     await dbPool.close();
     console.log("Kurulum tamamlandı.");
-  } catch (e: any) {
-    console.error("Tablo oluşturma hatası:", e.message);
+  } catch (e) {
+    console.error("Tablo oluşturma hatası:", errorMessage(e));
     process.exit(1);
   }
 }

@@ -1,5 +1,7 @@
 import sql from "mssql";
 
+export type QueryParams = Record<string, unknown>;
+
 let pool: sql.ConnectionPool | null = null;
 
 export async function getPool(): Promise<sql.ConnectionPool> {
@@ -28,7 +30,10 @@ export async function getPool(): Promise<sql.ConnectionPool> {
   return pool;
 }
 
-export async function query<T = any>(text: string, params: Record<string, any> = {}): Promise<T[]> {
+export async function query<T = Record<string, unknown>>(
+  text: string,
+  params: QueryParams = {}
+): Promise<T[]> {
   const p = await getPool();
   const request = p.request();
   for (const [key, value] of Object.entries(params)) {
@@ -38,7 +43,7 @@ export async function query<T = any>(text: string, params: Record<string, any> =
   return result.recordset as T[];
 }
 
-export async function execute(text: string, params: Record<string, any> = {}) {
+export async function execute(text: string, params: QueryParams = {}) {
   const p = await getPool();
   const request = p.request();
   for (const [key, value] of Object.entries(params)) {
