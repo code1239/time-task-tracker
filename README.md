@@ -209,6 +209,7 @@ docker-compose.yml   app + isteğe bağlı db profili
 | `db` profili başlamıyor | `DB_ADMIN_PASSWORD` tanımlı olmalı; host portu 1433 doluysa 14333 kullanılır. |
 | Girişte 401 | Kullanıcı adı/şifre; hesap `user:create` ile açılmış mı? |
 | Tema diğer kullanıcıdan kaldı | Giriş sonrası sunucudan gelen tercih uygulanır; sayfayı yenileyin. |
+| Sayfa sürekli kendini yeniliyor | `next build` sonrası dev'e geçildiyse `.next` karışmış olabilir. `npm run dev` artık üretim `BUILD_ID`'sini görüp `.next`'i kendisi temizler. Tarayıcıda sekmeyi kapatıp yeniden açın (Ctrl+Shift+R). |
 | Saat yanlış | Saat dilimi sabittir; cihaz saati yanlışsa dijital saat de yanlış görünür. |
 
 ## Güvenlik notları
