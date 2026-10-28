@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AuroraBackground } from "@/components/aurora-background";
 import { ThemeProvider, themeInitScript } from "@/components/theme-provider";
 import { MotionConfig } from "motion/react";
 
@@ -45,9 +44,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-dvh font-sans">
-        <MotionConfig reducedMotion="user">
+        <MotionConfig reducedMotion="always">
           <ThemeProvider>
-            <AuroraBackground />
             {children}
           </ThemeProvider>
         </MotionConfig>
