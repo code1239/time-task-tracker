@@ -283,6 +283,130 @@ select {
   background-color: inherit;
 }
 
+/* ---------- clock stage / fullscreen ---------- */
+
+.clock-stage[data-fullscreen] {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(16px, 3vh, 36px);
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: clamp(18px, 4vmin, 56px);
+  overflow: auto;
+  background:
+    radial-gradient(120% 90% at 50% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 62%),
+    var(--bg);
+  color: var(--fg);
+}
+
+.clock-stage::backdrop {
+  background: var(--bg);
+}
+
+/* the glass card contains its children (layout + paint), which would trap the
+   fixed fallback overlay; release it only while the fallback is active */
+.glass:has(.clock-stage[data-fallback]) {
+  contain: style;
+  overflow: visible;
+}
+
+.clock-stage[data-fullscreen] .clock-stage__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  align-items: center;
+  gap: clamp(18px, 4vh, 44px);
+  width: 100%;
+  max-width: 1500px;
+  text-align: center;
+}
+
+.clock-stage[data-fullscreen] .clock-stage__text {
+  order: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.clock-stage[data-fullscreen] .clock-stage__clock {
+  order: 2;
+  width: min(78vw, 44vh);
+}
+
+.clock-stage[data-fullscreen] .clock-hour,
+.clock-stage[data-fullscreen] .clock-minute,
+.clock-stage[data-fullscreen] .clock-second {
+  font-size: clamp(52px, 16vw, 132px);
+}
+
+.clock-stage[data-fullscreen] .clock-colon {
+  margin-inline: clamp(2px, 0.6vw, 10px);
+  font-size: clamp(38px, 11vw, 92px);
+  transform: translateY(-0.06em);
+}
+
+.clock-stage[data-fullscreen] .clock-time {
+  margin-top: clamp(10px, 2vh, 22px);
+}
+
+.clock-stage[data-fullscreen] .clock-live {
+  padding: clamp(4px, 0.8vmin, 8px) clamp(10px, 1.2vw, 18px);
+  font-size: clamp(10px, 1vw, 14px);
+}
+
+.clock-stage[data-fullscreen] .clock-divider {
+  margin-top: clamp(14px, 2.4vh, 28px);
+  max-width: 560px;
+}
+
+.clock-stage[data-fullscreen] .clock-date {
+  margin-top: clamp(12px, 2.2vh, 26px);
+  font-size: clamp(16px, 2.2vw, 30px);
+}
+
+.clock-stage[data-fullscreen] .clock-note,
+.clock-stage[data-fullscreen] .clock-zone {
+  display: none;
+}
+
+.clock-stage[data-fullscreen] .clock-stage__actions {
+  margin-top: clamp(12px, 2.5vh, 28px);
+}
+
+@media (orientation: landscape) and (min-width: 700px) {
+  .clock-stage[data-fullscreen] .clock-stage__body {
+    grid-template-columns: minmax(0, 1fr) auto;
+    justify-items: stretch;
+    gap: clamp(28px, 5vw, 80px);
+    text-align: left;
+  }
+
+  .clock-stage[data-fullscreen] .clock-stage__text {
+    align-items: flex-start;
+  }
+
+  .clock-stage[data-fullscreen] .clock-stage__clock {
+    width: min(34vw, 68vh);
+  }
+
+  .clock-stage[data-fullscreen] .clock-hour,
+  .clock-stage[data-fullscreen] .clock-minute,
+  .clock-stage[data-fullscreen] .clock-second {
+    font-size: clamp(64px, 9vw, 176px);
+  }
+
+  .clock-stage[data-fullscreen] .clock-colon {
+    font-size: clamp(44px, 6vw, 112px);
+  }
+}
+
 /* ---------- micro animations ---------- */
 
 @keyframes pulse-ring {
