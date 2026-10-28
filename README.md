@@ -1,228 +1,114 @@
-# Zaman — Türkiye Saati, Görev Takibi ve Geri Sayım
+# Time & Task Tracker
 
-Tek sayfalık, Türkçe arayüzlü bir zaman çalışma alanı. Türkiye saatini canlı gösterir,
-günlük görev sayısını tutar, geçmişi grafikleştirir ve hedeflere kalan süreyi sayar.
-Kullanıcılar birbirinden tamamen izole çalışır; kayıt ekranı yoktur, hesaplar yönetici
-tarafından açılır.
+A focused, glassmorphic Turkish time/task/countdown web app built with Next.js 16 (App Router), TypeScript, Tailwind CSS, SQL Server, and Docker.
 
-## Özellikler
+## Features
 
-- **Türkiye Saati** — dijital (animasyonlu rakamlar) ve analog saat, Türkçe tarih.
-  Saat dilimi her zaman `Europe/Istanbul` (UTC+3), cihazın diliminden bağımsız.
-- **Yapılan Görev** — iyimser (optimistic) atomik sayaç, 00:00'da İstanbul gününe göre
-  sıfırlanma, 7/30 günlük animasyonlu geçmiş grafiği, 5'in katlarında kutlama efekti.
-- **Geri Sayım** — `1h 30m` / `90m` gibi süre girişi, animasyonlu saat/dakika/saniye,
-  süre dolunca sekme değiştirilse bile çalan çan sesi ("Sesi durdur"a kadar tekrar),
-  süresi dolmuş durumu ve temizleme.
-- **Tema** — açık / koyu / sistem; kullanıcı bazında `Users.ThemePreference` ve
-  `localStorage` ile kalıcı, ilk boyamada parlama yok, giriş sayfası da temayı izler.
-- **Aurora cam arayüz** — CSS değişkenleri, cam efektleri, hareket azaltma desteği,
-  sekme görünürlüğünde animasyon duraklatma, klavyeyle gezilebilir sekmeler.
-- **Güvenlik** — bcrypt hash, httpOnly + SameSite=Lax JWT çerezi, giriş hız sınırı,
-  parametreli sorgular, kısıtlı veritabanı kullanıcısı, kayıt ekranı yok.
+- **Turkey Time** � live digital (animated digits) and analog clock, Turkish date formatting. Always `Europe/Istanbul` (UTC+3), independent of the device timezone.
+- **Daily Tasks** � optimistic atomic counter with Istanbul-midnight rollover, 7/30-day animated history chart, and confetti on milestone hits (multiples of 5).
+- **Countdown** � set a duration like `1h 30m`, `90m`, or `90`. Animated hours/minutes/seconds countdown (up to 24h). When it expires, a Web Audio bell rings until you tap **Stop alarm**. The alarm works across tabs; if the page was closed when it expired, it appears silently as "Time's up".
+- **Theme** � light/dark/system with per-user `Users.ThemePreference` persisted in SQL Server and `localStorage`. No flash on load; login page follows the theme.
+- **Polished UI** � aurora/glass aesthetic, reduced-motion support, animations paused when tab is hidden, keyboard-accessible tabs with visible focus.
+- **Auth & Security** � login only (no registration), httpOnly SameSite=Lax JWT cookie, bcrypt hashes, rate-limited login, parameterized queries, least-privilege DB user (`db_datareader`/`db_datawriter`).
 
-## Teknolojiler
+## Tech Stack
 
-| Katman | Seçim |
-| --- | --- |
-| Çatı | Next.js 16 (App Router, TypeScript, Turbopack) |
-| Stil | Tailwind CSS 4 + el yazımı CSS değişkenleri |
-| Veritabanı | Microsoft SQL Server (`mssql` / `tedious`) |
-| Kimlik | `bcryptjs` + `jose` (HS256 JWT) |
-| Hareket | `motion`, `@number-flow/react`, `canvas-confetti` |
-| Doğrulama | `zod` |
-| Tarih | `date-fns-tz` + `Intl` |
+- [Next.js 16](https://nextjs.org/) App Router, TypeScript
+- [Tailwind CSS 4](https://tailwindcss.com/)
+- [motion](https://motion.dev/) for animations
+- [@number-flow/react](https://number-flow.barvian.me/) for animated digits
+- [mssql](https://www.npmjs.com/package/mssql) for SQL Server
+- [jose](https://github.com/panva/jose) + [bcryptjs](https://github.com/dcodeIO/bcrypt.js) for auth
+- [canvas-confetti](https://www.npmjs.com/package/canvas-confetti)
+- [date-fns-tz](https://www.npmjs.com/package/date-fns-tz)
 
-## Gereksinimler
+## Requirements
 
-- Node.js **20.9+** (Node 24 önerilir)
-- Erişilebilir bir SQL Server (2019/2022; yerel, uzak veya Docker)
-- SQL Authentication açık olmalı ve yönetici (ör. `sa`) bağlantısı yapılabilmeli
+- Node.js 20+ (or 24)
+- SQL Server 2019+ (local instance or container)
+- Docker (optional, for containerized run)
 
-## Hızlı Başlangıç
+## Environment Variables
 
-```bash
-npm install
+Copy `.env.example` to `.env` (runtime) and/or `.env.local` (local dev). All secrets must stay out of git.
 
-# 1) Ortam değişkenlerini hazırla
-cp .env.example .env.local
-cp .env.example .env
-
-# 2) .env.local içinde DB_ADMIN_USER / DB_ADMIN_PASSWORD ve JWT_SECRET doldur
-#    (JWT_SECRET için: node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))")
-
-# 3) Veritabanını kur (idempotent — tekrar çalıştırılabilir)
-npm run db:setup
-
-# 4) Kullanıcı oluştur
-npm run user:create -- ayse "GucluBirSifre!"
-
-# 5) Geliştirme sunucusu
-npm run dev
-```
-
-`http://localhost:3000` adresinde giriş ekranı açılır.
-
-### Ortam değişkenleri
-
-| Değişken | Açıklama |
-| --- | --- |
-| `DB_SERVER` | SQL Server adresi. Yerelde `localhost`, Docker'da `host.docker.internal` (veya `db`). |
-| `DB_PORT` | SQL Server portu, varsayılan `1433`. |
-| `DB_NAME` | Veritabanı adı, varsayılan `time_task_tracker`. |
-| `DB_USER` | Uygulamanın kullandığı kısıtlı SQL login'i. |
-| `DB_PASSWORD` | Uygulama login'inin şifresi. Boşsa `db:setup` üretir ve `.env.local`'e yazar. |
-| `DB_TRUST_SERVER_CERTIFICATE` | Geliştirmede self-signed sertifika için `true`. |
-| `DB_ADMIN_USER` | **Yalnızca kurulum scriptleri** için yönetici kullanıcı. Uygulamaya/Docker'a verilmez. |
-| `DB_ADMIN_PASSWORD` | **Yalnızca kurulum scriptleri** için yönetici şifresi. |
-| `JWT_SECRET` | Oturum imzalama anahtarı (en az 32 baytlık rastgele değer). |
-| `COOKIE_SECURE` | HTTPS arkasında `true`; yerel HTTP geliştirmede `false`. |
-
-> `.env.local` yerel geliştirme ve scriptler içindir; `.env` ise Docker Compose'un
-> `env_file` kaynağıdır. İki dosya da `.gitignore` kapsamındadır — **asla commit etmeyin**.
-> Next.js `.env.local`'i `.env`'den önce okur.
-
-### `db:setup` ne yapar?
-
-1. Yönetici hesabıyla `master` veritabanına bağlanır.
-2. `DB_NAME` yoksa oluşturur.
-3. `DB_USER` login'ini oluşturur veya şifresini günceller.
-4. Veritabanında kullanıcıyı oluşturur ve yalnızca `db_datareader` + `db_datawriter`
-   rollerine ekler (DDL yetkisi vermez).
-5. `Users`, `DailyTaskCounts`, `Countdowns` tablolarını ve indekslerini oluşturur.
-6. `DB_PASSWORD` boşsa güvenli bir şifre üretip `.env.local`'e yazar.
-
-Script idempotenttir; tekrar çalıştırmak veriyi silmez.
-
-### Kullanıcı yönetimi
-
-Kayıt (register) ekranı yoktur. Kullanıcılar terminalden yönetilir:
-
-```bash
-npm run user:create -- <kullaniciadi> <sifre>
-npm run user:reset-password -- <kullaniciadi> <yeniSifre>
-npm run user:list
-```
-
-Şifreler bcrypt (10 tur) ile hash'lenir. Kullanıcı adı benzersizdir.
-
-## Docker
-
-```bash
-# Ana makinede çalışan SQL Server'a bağlanarak uygulamayı ayağa kaldır
-docker compose up --build -d
-
-# Günlükler
-docker compose logs -f app
-
-# Durdur
-docker compose down
-```
-
-- Compose, uygulama ortamını `.env` dosyasından okur. Docker imajına `.env*`
-  dosyaları **kopyalanmaz**.
-- Konteyner içinden ana makinedeki SQL Server'a erişim `host.docker.internal`
-  üzerinden sağlanır (`extra_hosts: host.docker.internal:host-gateway`).
-- İmaj çok aşamalıdır, `standalone` çıktısı kullanır ve `nextjs` (UID 1001) adlı
-  kök olmayan kullanıcıyla çalışır.
-- Sağlık kontrolü `GET /api/health` üzerinden yapılır.
-
-### Ana makinedeki SQL Server'a erişim
-
-- SQL Server TCP/IP dinlemeli ve 1433 portu güvenlik duvarında açık olmalı.
-- Windows'ta SQL Server Configuration Manager → *SQL Server Network Configuration* →
-  *Protocols* → **TCP/IP = Enabled**, IPAll → **TCP Port = 1433**.
-- Docker Desktop kullanılıyorsa `host.docker.internal` otomatik çözümlenir.
-  Linux'ta compose dosyasındaki `extra_hosts` bunu sağlar.
-- SQL Server yalnızca `127.0.0.1`'e bağlıysa konteynerden erişilemez; `0.0.0.0`
-  dinlemesi veya ayrı bir konteyner gerekir.
-
-### İsteğe bağlı `db` profili
-
-Depoda hazır bir SQL Server servisi vardır ancak varsayılan olarak **kapalıdır**.
-Ana makinede 1433 dolu olabileceği için host portu **14333**'tür.
-
-```bash
-# PowerShell
-$env:DB_ADMIN_PASSWORD = "GucluBirSAParolasi!"
-docker compose --profile db up -d db
-
-# Kurulumu konteynerdeki SQL'e yap (host portu 14333)
-npm run db:setup   # .env.local içinde DB_SERVER=localhost, DB_PORT=14333 olmalı
-
-# Uygulamayı compose ağından db servisine bağla
-$env:DB_SERVER = "db"; $env:DB_PORT = "1433"
-docker compose up --build -d
-```
-
-> `.env.local` (host/scriptler) ile `.env` (Compose uygulaması) farklı `DB_SERVER`
-> değerleri taşıyabilir: host'tan `localhost:14333`, konteynerden `db:1433`.
-
-## Zaman ve gün dönümü davranışı
-
-- Günlük sayaç anahtarı `(UserId, CountDate)`'tir ve `CountDate` **İstanbul** günüdür.
-- Gece 00:00 (UTC+3) geçildiğinde istemci yeni günü algılar, sayaç sıfırdan okunur;
-  sunucu da her istekte tarihi yeniden hesapladığı için istemci kapalı olsa bile
-  yeni gün 0'dan başlar.
-- Geri sayım süresi olarak `1h 30m`, `1h30m`, `90m`, `90` (dakika) veya `1sa 30dk`
-  yazılabilir; en az 1 dakika, en fazla 24 saat. Girilen süre `Date.now() + süre`
-  olarak hesaplanıp UTC `DATETIME2` biçiminde saklanır, gösterim Türkçe yerel biçimdedir.
-- Süre dolduğunda Web Audio ile üretilen çan sesi, kullanıcı "Sesi durdur"a basana
-  kadar tekrar eder. Alarm uygulama genelindedir: başka sekmedeyken de çalar. Sayfa
-  kapalıyken süre dolarsa sonradan ses çalmaz, sessiz "Süre doldu" ekranı görünür.
-  Tarayıcı autoplay kuralı nedeniyle ses, ilk kullanıcı etkileşiminden sonra açılır.
-- `Count >= 0` veritabanı seviyesinde kısıtlanmıştır; azaltma 0'ın altına inmez.
-
-## API
-
-Tüm veri uçları oturum çerezini doğrular; kullanıcı kimliği sunucuda çerezden
-okunur, istemciden `userId` kabul edilmez.
-
-| Yöntem | Yol | Açıklama |
+| Variable | Required | Description |
 | --- | --- | --- |
-| `POST` | `/api/auth/login` | Giriş; 5 deneme/dakika hız sınırı |
-| `POST` | `/api/auth/logout` | Çıkış |
-| `GET` | `/api/auth/me` | Oturum bilgisi |
-| `GET` | `/api/tasks/today` | Bugünkü görev sayısı (İstanbul günü) |
-| `POST` | `/api/tasks/update` | `{ delta }` ile atomik artır/azalt |
-| `GET` | `/api/tasks/history?days=7\|30` | Günlük geçmiş, boş günler 0 |
-| `GET/POST/DELETE` | `/api/countdown` | Kullanıcının tek geri sayımı |
-| `GET/POST` | `/api/theme` | Tema tercihi |
-| `GET` | `/api/health` | Docker sağlık kontrolü (kimlik gerektirmez) |
+| `DB_SERVER` | yes | SQL Server host (e.g. `localhost` or `host.docker.internal`) |
+| `DB_PORT` | yes | SQL Server port (e.g. `1433`) |
+| `DB_NAME` | yes | Database name (e.g. `time_task_tracker`) |
+| `DB_USER` | yes | App DB user (restricted to `db_datareader`/`db_datawriter`) |
+| `DB_PASSWORD` | yes | App DB password (generated by `npm run db:setup` if missing) |
+| `DB_TRUST_SERVER_CERTIFICATE` | no | `true` for local dev/self-signed certs |
+| `JWT_SECRET` | yes | Secret used to sign httpOnly session cookies |
+| `COOKIE_SECURE` | no | `true` to set `Secure` flag (set behind HTTPS) |
+| `DB_ADMIN_USER` | setup only | SA/admin user used by `npm run db:setup` |
+| `DB_ADMIN_PASSWORD` | setup only | SA/admin password used by `npm run db:setup` |
 
-## Klasör yapısı
+See [`.env.example`](.env.example) for a filled template.
 
+## Local Development
+
+1. Install dependencies
+   ```bash
+   npm install
+   ```
+2. Configure `.env.local` with SQL Server and admin creds, and `.env` for app runtime.
+3. Set up the database (idempotent). Creates DB/schema/tables/indexes, app login/user, grants least privilege, and writes `DB_PASSWORD`/`JWT_SECRET` to `.env.local` if missing.
+   ```bash
+   npm run db:setup
+   ```
+4. Create users (no public registration)
+   ```bash
+   npm run user:create -- <username> <password>
+   npm run user:reset-password -- <username> <password>
+   npm run user:list
+   ```
+5. Run the dev server
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000). If you switched from `next build` to `next dev`, the predev script clears a stale `.next` with `BUILD_ID` automatically.
+
+## Docker (Production-like)
+
+Multi-stage Dockerfile builds a standalone Next.js app as a non-root `nextjs` user. `docker-compose.yml` runs the app with `host.docker.internal` by default and an optional `db` profile for a local SQL Server container.
+
+```bash
+# Build and run
+docker compose up -d --build
+
+# Optional: run local SQL Server (host:14333)
+# DB_SERVER=db DB_PORT=1433 DB_ADMIN_PASSWORD=... docker compose --profile db up -d
 ```
-app/
-  api/               route handler'lar
-  login/             giriş sayfası
-  globals.css        tasarım token'ları, aurora, cam, hareket
-  layout.tsx         tema başlatma, fontlar, arka plan
-components/          dashboard, sekmeler, saat, sayaç, grafik, geri sayım
-lib/                 db, auth, tarih yardımcıları, useNow
-scripts/             db-setup, user-create/reset/list
-proxy.ts             Next.js 16 proxy (oturum koruması)
-docker-compose.yml   app + isteğe bağlı db profili
-```
 
-## Sorun giderme
+Health check: `GET /api/health`. Ensure SQL Server is reachable from the container and TCP/firewall is configured.
 
-| Belirti | Çözüm |
+## Time & Rollover Behavior
+
+- Daily task key is `(UserId, CountDate)` with `CountDate` calculated in **Europe/Istanbul**.
+- At 00:00 Istanbul the client detects the new day and reloads the count; the server computes the date per request so rollover works even if the tab was closed.
+- Countdown duration is entered as `1h 30m`, `1h30m`, `90m`, or `90` (minutes). It is stored as UTC in `DATETIME2`. On expiry the Web Audio bell repeats until dismissed. The alarm is app-wide; if the tab was in the background or the page was closed at expiry, it appears silently as "Time's up" with a **Play alarm** option. Browser autoplay rules require user interaction before audio can play.
+- All DB writes use parameterized queries. `COUNT >= 0` is enforced at the DB level.
+
+## Scripts
+
+| Script | Purpose |
 | --- | --- |
-| `Yönetici bağlantısı başarısız` | SQL Server çalışıyor mu, TCP/IP açık mı, 1433 erişilebilir mi, `DB_*` doğru mu? |
-| `ENOTFOUND host.docker.internal` (scriptler) | Scriptler `.env.local` okur; orada `DB_SERVER=localhost` olmalı. |
-| Docker'da uygulama DB'ye ulaşamıyor | `DB_SERVER=host.docker.internal`, güvenlik duvarı 1433, SQL Server'ın `0.0.0.0` dinlemesi. |
-| `db` profili başlamıyor | `DB_ADMIN_PASSWORD` tanımlı olmalı; host portu 1433 doluysa 14333 kullanılır. |
-| Girişte 401 | Kullanıcı adı/şifre; hesap `user:create` ile açılmış mı? |
-| Tema diğer kullanıcıdan kaldı | Giriş sonrası sunucudan gelen tercih uygulanır; sayfayı yenileyin. |
-| Sayfa sürekli kendini yeniliyor | `next build` sonrası dev'e geçildiyse `.next` karışmış olabilir. `npm run dev` artık üretim `BUILD_ID`'sini görüp `.next`'i kendisi temizler. Tarayıcıda sekmeyi kapatıp yeniden açın (Ctrl+Shift+R). |
-| Saat yanlış | Saat dilimi sabittir; cihaz saati yanlışsa dijital saat de yanlış görünür. |
+| `npm run dev` | Next.js dev server (Turbopack) with predev cleanup guard |
+| `npm run build` | Production build |
+| `npm run start` | Start production server |
+| `npm run lint` | ESLint |
+| `npm run db:setup` | Idempotent DB/schema/user setup |
+| `npm run user:create` | Create a user |
+| `npm run user:reset-password` | Reset a user's password |
+| `npm run user:list` | List users |
 
-## Güvenlik notları
+## Troubleshooting
 
-- Yönetici kimlik bilgileri yalnızca `scripts/` tarafından okunur; uygulama kodu ve
-  Docker imajı bu değerleri görmez.
-- Tüm sorgular parametrelidir. Tanımlayıcılar (DB/kullanıcı adı) desenle doğrulanır.
-- Oturum çerezi `httpOnly`, `SameSite=Lax`, 7 gün; üretimde `COOKIE_SECURE=true` kullanın.
-- Giriş denemeleri IP başına dakikada 5 ile sınırlıdır.
-- Üretimde TLS sonlandırmayı ters vekil (reverse proxy) ile yapın.
+| Issue | Fix |
+| --- | --- |
+| Theme stuck from another account | Theme is applied on login from `Users.ThemePreference`; reload if needed. |
+| Page keeps reloading in dev | After `next build`, running `next dev` can mix artifacts. `npm run dev` now auto-clears `.next` if `BUILD_ID` exists. Hard-refresh (Ctrl+Shift+R) or reopen the tab. |
+| Wrong time shown | Timezone is fixed to `Europe/Istanbul`. If the device clock is wrong, the digital clock will reflect it. |
+| Cannot connect to SQL from Docker | Use `host.docker.internal` with TCP enabled and firewall open, or use the `db` compose profile. |
