@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 
 export function AuroraBackground() {
-  const [paused, setPaused] = useState(false);
+  const [paused, setPaused] = useState(() =>
+    typeof document !== "undefined" ? document.hidden : false
+  );
 
   useEffect(() => {
-    const onVisibility = () => setPaused(document.visibilityState === "hidden");
-    onVisibility();
+    const onVisibility = () => setPaused(document.hidden);
     document.addEventListener("visibilitychange", onVisibility);
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
