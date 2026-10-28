@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { Brand } from "./brand";
 import { ThemeToggle } from "./theme-toggle";
 import { TabBar, type TabId } from "./tab-bar";
@@ -95,24 +95,11 @@ export function Dashboard({
               <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
               <div className="pointer-events-none absolute -right-16 -top-24 size-48 rounded-full bg-accent/10 blur-3xl" />
 
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={tab}
-                  role="tabpanel"
-                  id={`panel-${tab}`}
-                  aria-labelledby={`tab-${tab}`}
-                  tabIndex={0}
-                  initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12, filter: "blur(5px)" }}
-                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8, filter: "blur(3px)" }}
-                  transition={{ duration: reduce ? 0.12 : 0.24, ease: [0.22, 1, 0.36, 1] }}
-                  className="relative outline-none"
-                >
-                  {tab === "clock" && <ClockTab />}
-                  {tab === "tasks" && <TasksTab />}
-                  {tab === "countdown" && <CountdownTab />}
-                </motion.div>
-              </AnimatePresence>
+              <div className="relative" role="tabpanel" aria-label={tab === "clock" ? "Türkiye Saati" : tab === "tasks" ? "Yapılan Görev" : "Geri Sayım"}>
+                {tab === "clock" && <ClockTab />}
+                {tab === "tasks" && <TasksTab />}
+                {tab === "countdown" && <CountdownTab />}
+              </div>
             </section>
 
             <p className="mt-5 text-center text-[10px] uppercase tracking-[0.18em] text-faint/80">

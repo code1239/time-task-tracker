@@ -11,6 +11,7 @@ type Props = {
 
 export function AnalogClock({ date, className = "" }: Props) {
   const reduce = useReducedMotion();
+  const timeParts = useMemo(() => new Date(), []);
 
   // The second hand runs as a continuous CSS animation. Capturing the offset once
   // keeps it perfectly smooth instead of ticking once per second.
@@ -24,7 +25,7 @@ export function AnalogClock({ date, className = "" }: Props) {
     ? ((parts.hour % 12) + parts.minute / 60 + parts.second / 3600) * 30
     : 300;
   const minuteAngle = parts ? (parts.minute + parts.second / 60) * 6 : 60;
-  const secondAngle = parts ? (parts.second + new Date(date!.getTime()).getMilliseconds() / 1000) * 6 : 0;
+  const secondAngle = parts ? (parts.second + timeParts.getMilliseconds() / 1000) * 6 : 0;
 
   const ticks = Array.from({ length: 60 }, (_, i) => i);
   const numerals = [
@@ -51,16 +52,6 @@ export function AnalogClock({ date, className = "" }: Props) {
             <stop offset="0%" stopColor="var(--glass-strong)" />
             <stop offset="100%" stopColor="var(--glass)" />
           </radialGradient>
-          <filter id="clock-shadow" x="-40%" y="-40%" width="180%" height="180%">
-            <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="var(--fg)" floodOpacity="0.28" />
-          </filter>
-          <filter id="second-glow" x="-120%" y="-120%" width="340%" height="340%">
-            <feGaussianBlur stdDeviation="2.2" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
         </defs>
 
         <circle cx="120" cy="120" r="112" fill="url(#clock-dial)" stroke="var(--line-strong)" strokeWidth="1" />
@@ -109,7 +100,6 @@ export function AnalogClock({ date, className = "" }: Props) {
             transformBox: "view-box",
             transition: reduce ? "none" : "transform 700ms cubic-bezier(0.22, 1, 0.36, 1)",
           }}
-          filter="url(#clock-shadow)"
         >
           <line x1="120" y1="130" x2="120" y2="76" stroke="var(--fg)" strokeWidth="5.5" strokeLinecap="round" />
         </g>
@@ -122,7 +112,6 @@ export function AnalogClock({ date, className = "" }: Props) {
             transformBox: "view-box",
             transition: reduce ? "none" : "transform 700ms cubic-bezier(0.22, 1, 0.36, 1)",
           }}
-          filter="url(#clock-shadow)"
         >
           <line x1="120" y1="132" x2="120" y2="52" stroke="var(--fg)" strokeOpacity="0.82" strokeWidth="3.4" strokeLinecap="round" />
         </g>
@@ -141,13 +130,13 @@ export function AnalogClock({ date, className = "" }: Props) {
                 : { animationDelay: `${secondDelay}s` }
             }
           >
-            <line x1="120" y1="136" x2="120" y2="42" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" />
-            <circle cx="120" cy="42" r="3.2" fill="var(--accent)" filter="url(#second-glow)" />
+            <line x1="120" y1="136" x2="120" y2="42" stroke="var(--accent)" strokeWidth="1.6" strokeLinecap="round" />
+            <circle cx="120" cy="42" r="2.8" fill="var(--accent)" />
           </g>
         )}
 
         <circle cx="120" cy="120" r="7" fill="var(--glass-strong)" stroke="var(--line-strong)" strokeWidth="1" />
-        <circle cx="120" cy="120" r="3.2" fill="var(--accent)" />
+        <circle cx="120" cy="120" r="2.6" fill="var(--accent)" />
       </svg>
     </div>
   );

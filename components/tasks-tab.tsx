@@ -78,13 +78,28 @@ export function TasksTab() {
   }, [loadToday, loadHistory]);
 
   useEffect(() => {
-    const interval = setInterval(checkDay, 15000);
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") checkDay();
+    let interval: ReturnType<typeof setInterval> | null = null;
+    const start = () => {
+      if (interval) return;
+      interval = setInterval(checkDay, 30000);
     };
+    const stop = () => {
+      if (!interval) return;
+      clearInterval(interval);
+      interval = null;
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        checkDay();
+        start();
+      } else {
+        stop();
+      }
+    };
+    start();
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
-      clearInterval(interval);
+      stop();
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [checkDay]);
