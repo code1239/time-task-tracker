@@ -11,8 +11,9 @@ tarafından açılır.
   Saat dilimi her zaman `Europe/Istanbul` (UTC+3), cihazın diliminden bağımsız.
 - **Yapılan Görev** — iyimser (optimistic) atomik sayaç, 00:00'da İstanbul gününe göre
   sıfırlanma, 7/30 günlük animasyonlu geçmiş grafiği, 5'in katlarında kutlama efekti.
-- **Geri Sayım** — Türkiye saatine göre tarih/saat girişi, UTC olarak saklama,
-  animasyonlu gün/saat/dakika/saniye, süresi dolmuş durumu ve temizleme.
+- **Geri Sayım** — `1h 30m` / `90m` gibi süre girişi, animasyonlu saat/dakika/saniye,
+  süre dolunca sekme değiştirilse bile çalan çan sesi ("Sesi durdur"a kadar tekrar),
+  süresi dolmuş durumu ve temizleme.
 - **Tema** — açık / koyu / sistem; kullanıcı bazında `Users.ThemePreference` ve
   `localStorage` ile kalıcı, ilk boyamada parlama yok, giriş sayfası da temayı izler.
 - **Aurora cam arayüz** — CSS değişkenleri, cam efektleri, hareket azaltma desteği,
@@ -163,8 +164,13 @@ docker compose up --build -d
 - Gece 00:00 (UTC+3) geçildiğinde istemci yeni günü algılar, sayaç sıfırdan okunur;
   sunucu da her istekte tarihi yeniden hesapladığı için istemci kapalı olsa bile
   yeni gün 0'dan başlar.
-- Geri sayım girişi İstanbul saatiyle yorumlanır, UTC'ye çevrilip `DATETIME2` olarak
-  saklanır; gösterim yine Türkçe yerel biçimdedir.
+- Geri sayım süresi olarak `1h 30m`, `1h30m`, `90m`, `90` (dakika) veya `1sa 30dk`
+  yazılabilir; en az 1 dakika, en fazla 24 saat. Girilen süre `Date.now() + süre`
+  olarak hesaplanıp UTC `DATETIME2` biçiminde saklanır, gösterim Türkçe yerel biçimdedir.
+- Süre dolduğunda Web Audio ile üretilen çan sesi, kullanıcı "Sesi durdur"a basana
+  kadar tekrar eder. Alarm uygulama genelindedir: başka sekmedeyken de çalar. Sayfa
+  kapalıyken süre dolarsa sonradan ses çalmaz, sessiz "Süre doldu" ekranı görünür.
+  Tarayıcı autoplay kuralı nedeniyle ses, ilk kullanıcı etkileşiminden sonra açılır.
 - `Count >= 0` veritabanı seviyesinde kısıtlanmıştır; azaltma 0'ın altına inmez.
 
 ## API
