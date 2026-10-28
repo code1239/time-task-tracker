@@ -1,71 +1,53 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import NumberFlow from "@number-flow/react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { formatIstanbulDateTime } from "@/lib/date";
 import {
-  addDaysToDateString,
-  formatIstanbul,
-  formatIstanbulDateTime,
-  getIstanbulDateString,
-  istanbulToUtc,
-} from "@/lib/date";
+  MAX_MINUTES,
+  MIN_MINUTES,
+  durationErrorMessage,
+  formatDurationInput,
+  formatDurationLabel,
+  parseDuration,
+} from "@/lib/duration";
+import { unlockAudio } from "@/lib/alarm";
 import { useNow } from "@/lib/use-now";
-import { CalendarIcon, EditIcon, HourglassIcon, SparkleIcon, TrashIcon } from "./icons";
-
-type Countdown = { title: string | null; targetAt: string };
+import { useCountdown } from "./countdown-provider";
+import { BellIcon, CalendarIcon, EditIcon, HourglassIcon, SparkleIcon, TrashIcon } from "./icons";
 
 const fieldClass =
-  "h-11 w-full rounded-xl border border-line bg-surface/50 px-3 text-[14px] text-fg placeholder:text-faint/70 transition-colors hover:border-line-strong focus:border-accent/60";
+  "h-12 w-full rounded-xl border border-line bg-surface/50 px-3 text-[16px] text-fg placeholder:text-faint/70 transition-colors hover:border-line-strong focus:border-accent/60";
+
+const PRESETS = [
+  { label: "5dk", value: "5m" },
+  { label: "15dk", value: "15m" },
+  { label: "30dk", value: "30m" },
+  { label: "1sa", value: "1h" },
+];
 
 export function CountdownTab() {
   const now = useNow(1000);
   const reduce = useReducedMotion();
-  const [countdown, setCountdown] = useState<Countdown | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { countdown, loading, loadError, updateCountdown, replayAlarm } = useCountdown();
+
+  const [mode, setMode] = useState<"view" | "form">("view");
+  const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [mode, setMode] = useState<"view" | "form">("view");
   const [confirmClear, setConfirmClear] = useState(false);
-
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState(addDaysToDateString(getIstanbulDateString(), 1));
-  const [time, setTime] = useState("09:00");
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/countdown", { cache: "no-store" });
-        if (!res.ok) throw new Error("failed");
-        const data = await res.json();
-        if (!cancelled) setCountdown(data.countdown ?? null);
-      } catch {
-        if (!cancelled) setError("Geri sayım yüklenemedi.");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!confirmClear) return;
-    const t = setTimeout(() => setConfirmClear(false), 4000);
-    return () => clearTimeout(t);
-  }, [confirmClear]);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const target = countdown ? new Date(countdown.targetAt).getTime() : null;
   const diff = target !== null && now !== null ? target - now : null;
   const expired = diff !== null && diff <= 0;
+  const form = mode === "form" || (!loading && !countdown);
 
   const units =
     diff !== null && diff > 0
       ? [
-          { label: "gün", value: Math.floor(diff / 86_400_000), pad: 1 },
-          { label: "saat", value: Math.floor(diff / 3_600_000) % 24, pad: 2 },
+          { label: "saat", value: Math.floor(diff / 3_600_000), pad: 2 },
           { label: "dakika", value: Math.floor(diff / 60_000) % 60, pad: 2 },
           { label: "saniye", value: Math.floor(diff / 1_000) % 60, pad: 2 },
         ]
@@ -73,45 +55,50 @@ export function CountdownTab() {
 
   function openForm() {
     if (countdown) {
-      const d = new Date(countdown.targetAt);
-      setTitle(countdown.title ?? "");
-      setDate(formatIstanbul(d, "yyyy-MM-dd"));
-      setTime(formatIstanbul(d, "HH:mm"));
+      const remaining = Math.max(
+        MIN_MINUTES,
+        Math.ceil((new Date(countdown.targetAt).getTime() - Date.now()) / 60_000)
+      );
+      setInput(formatDurationInput(remaining));
     } else {
-      setTitle("");
-      setDate(addDaysToDateString(getIstanbulDateString(), 1));
-      setTime("09:00");
+      setInput("");
     }
     setError(null);
     setMode("form");
+    requestAnimationFrame(() => inputRef.current?.focus());
   }
 
-  async function save(e: React.FormEvent) {
-    e.preventDefault();
-    if (saving) return;
+  function applyPreset(value: string) {
+    setInput(value);
     setError(null);
-    if (!date || !time) {
-      setError("Lütfen bir tarih ve saat seçin.");
+    inputRef.current?.focus();
+  }
+
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    if (saving) return;
+
+    // Ses kilidi yalnızca kullanıcı etkileşimiyle açılabilir.
+    unlockAudio();
+
+    const parsed = parseDuration(input);
+    if (!parsed.ok) {
+      setError(durationErrorMessage(parsed.error));
       return;
     }
-    const targetDate = istanbulToUtc(date, time);
-    if (isNaN(targetDate.getTime())) {
-      setError("Geçersiz bir tarih seçtiniz.");
-      return;
-    }
+
+    setError(null);
     setSaving(true);
+    const targetAt = new Date(Date.now() + parsed.minutes * 60_000).toISOString();
     try {
       const res = await fetch("/api/countdown", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim() ? title.trim() : null,
-          targetAt: targetDate.toISOString(),
-        }),
+        body: JSON.stringify({ title: null, targetAt }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "failed");
-      setCountdown({ title: title.trim() || null, targetAt: targetDate.toISOString() });
+      updateCountdown({ title: null, targetAt });
       setMode("view");
     } catch {
       setError("Geri sayım kaydedilemedi. Lütfen tekrar deneyin.");
@@ -126,7 +113,7 @@ export function CountdownTab() {
     try {
       const res = await fetch("/api/countdown", { method: "DELETE" });
       if (!res.ok) throw new Error("failed");
-      setCountdown(null);
+      updateCountdown(null);
       setMode("view");
       setConfirmClear(false);
     } catch {
@@ -136,14 +123,12 @@ export function CountdownTab() {
     }
   }
 
-  const form = mode === "form";
-
   return (
     <div>
       <div className="flex min-h-8 items-center justify-between gap-3">
         <div className="inline-flex items-center gap-2 rounded-full glass-inset px-3 py-1.5 text-[11px] font-medium text-muted">
           <HourglassIcon className="size-3.5 text-accent" />
-          {countdown?.title ? countdown.title : "GERİ SAYIM"}
+          GERİ SAYIM
         </div>
         {countdown && !expired && (
           <span className="hidden font-mono text-[10px] text-faint sm:inline">
@@ -151,6 +136,12 @@ export function CountdownTab() {
           </span>
         )}
       </div>
+
+      {loadError && !loading && (
+        <p role="alert" className="mt-3 rounded-xl border border-coral/25 bg-coral/10 px-3 py-2 text-[12px] text-coral">
+          {loadError}
+        </p>
+      )}
 
       <AnimatePresence mode="wait" initial={false}>
         {loading ? (
@@ -163,7 +154,7 @@ export function CountdownTab() {
           >
             <div className="h-20 w-64 animate-pulse rounded-2xl bg-fg/10" />
           </motion.div>
-        ) : form ? (
+        ) : form || !countdown ? (
           <motion.form
             key="form"
             onSubmit={save}
@@ -173,62 +164,62 @@ export function CountdownTab() {
             transition={{ duration: 0.24 }}
             className="mx-auto mt-5 w-full max-w-md"
           >
-            <div className="space-y-3.5">
-              <div>
-                <label htmlFor="cd-title" className="mb-1.5 block text-[11px] font-medium uppercase tracking-[0.12em] text-faint">
-                  Başlık <span className="normal-case tracking-normal text-faint/70">(isteğe bağlı)</span>
-                </label>
-                <input
-                  id="cd-title"
-                  type="text"
-                  value={title}
-                  maxLength={100}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Örn. Proje teslimi"
-                  className={fieldClass}
-                />
-              </div>
-
-              <div className="grid grid-cols-[1fr_auto] gap-3">
-                <div>
-                  <label htmlFor="cd-date" className="mb-1.5 block text-[11px] font-medium uppercase tracking-[0.12em] text-faint">
-                    Tarih
-                  </label>
-                  <input
-                    id="cd-date"
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    required
-                    className={fieldClass}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="cd-time" className="mb-1.5 block text-[11px] font-medium uppercase tracking-[0.12em] text-faint">
-                    Saat
-                  </label>
-                  <input
-                    id="cd-time"
-                    type="time"
-                    value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                    required
-                    className={`${fieldClass} w-[118px] font-mono`}
-                  />
-                </div>
-              </div>
-
-              <p className="flex items-center gap-1.5 text-[11px] text-faint">
-                <CalendarIcon className="size-3.5" />
-                Tarih ve saat Türkiye saatine (UTC+3) göre yorumlanır.
-              </p>
-
-              {now !== null && date && time && istanbulToUtc(date, time).getTime() < now && (
-                <p className="rounded-xl border border-coral/25 bg-coral/10 px-3 py-2 text-[12px] text-coral">
-                  Seçtiğiniz zaman geçmişte. Kaydederseniz &quot;Süre doldu&quot; görünür.
+            {!countdown && (
+              <div className="mb-5 text-center">
+                <h3 className="text-lg font-semibold tracking-tight">Ne kadar süre?</h3>
+                <p className="mt-1 text-[12px] leading-relaxed text-muted">
+                  Süreyi yaz, geri sayım hemen başlasın.
                 </p>
-              )}
+              </div>
+            )}
+
+            <label
+              htmlFor="cd-duration"
+              className="mb-1.5 block text-[11px] font-medium uppercase tracking-[0.12em] text-faint"
+            >
+              Süre
+            </label>
+            <input
+              ref={inputRef}
+              id="cd-duration"
+              type="text"
+              value={input}
+              onChange={(e) => {
+                setInput(e.target.value);
+                if (error) setError(null);
+              }}
+              placeholder="1h 30m"
+              autoComplete="off"
+              spellCheck={false}
+              aria-describedby="cd-duration-hint"
+              aria-invalid={error ? true : undefined}
+              className={`${fieldClass} font-mono`}
+            />
+
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              {PRESETS.map((preset) => (
+                <button
+                  key={preset.value}
+                  type="button"
+                  onClick={() => applyPreset(preset.value)}
+                  className="h-7 rounded-full border border-line px-2.5 font-mono text-[11px] text-muted transition-colors hover:border-accent/40 hover:bg-accent/10 hover:text-fg"
+                >
+                  {preset.label}
+                </button>
+              ))}
             </div>
+
+            <p id="cd-duration-hint" className="mt-2.5 text-[11px] leading-relaxed text-faint">
+              <span className="font-mono">1h 30m</span>, <span className="font-mono">90m</span> veya{" "}
+              <span className="font-mono">1sa 30dk</span> yazabilirsin. En az {MIN_MINUTES} dakika, en fazla{" "}
+              {MAX_MINUTES / 60} saat.
+            </p>
+
+            {countdown && diff !== null && diff > 0 && (
+              <p className="mt-1.5 text-[11px] text-faint/80">
+                Şu an kalan: {formatDurationLabel(Math.max(MIN_MINUTES, Math.ceil(diff / 60_000)))}
+              </p>
+            )}
 
             <AnimatePresence>
               {error && (
@@ -254,8 +245,10 @@ export function CountdownTab() {
               >
                 <span className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
                 <span className="relative inline-flex items-center gap-2">
-                  {saving && <span className="size-3 animate-spin rounded-full border-2 border-white/35 border-t-white" />}
-                  {saving ? "Kaydediliyor" : "Kaydet"}
+                  {saving && (
+                    <span className="size-3 animate-spin rounded-full border-2 border-white/35 border-t-white" />
+                  )}
+                  {saving ? "Kaydediliyor" : countdown ? "Güncelle" : "Geri sayım oluştur"}
                 </span>
               </motion.button>
               {countdown && (
@@ -272,32 +265,6 @@ export function CountdownTab() {
               )}
             </div>
           </motion.form>
-        ) : !countdown ? (
-          <motion.div
-            key="empty"
-            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.24 }}
-            className="flex min-h-[260px] flex-col items-center justify-center text-center"
-          >
-            <div className="grid size-16 place-items-center rounded-3xl glass-inset">
-              <HourglassIcon className="size-7 text-accent" />
-            </div>
-            <h3 className="mt-4 text-lg font-semibold tracking-tight">Bir hedef belirle</h3>
-            <p className="mt-1.5 max-w-[280px] text-[13px] leading-relaxed text-muted">
-              Önemli bir tarih seç; kalan gün, saat, dakika ve saniyeyi canlı takip et.
-            </p>
-            <motion.button
-              type="button"
-              onClick={openForm}
-              whileHover={reduce ? undefined : { scale: 1.02 }}
-              whileTap={reduce ? undefined : { scale: 0.97 }}
-              className="accent-gradient mt-5 h-11 rounded-xl px-5 text-[13px] font-medium text-white shadow-glow transition-[filter] hover:brightness-110"
-            >
-              Geri sayım oluştur
-            </motion.button>
-          </motion.div>
         ) : expired ? (
           <motion.div
             key="expired"
@@ -307,25 +274,44 @@ export function CountdownTab() {
             transition={{ type: "spring", stiffness: 240, damping: 24 }}
             className="flex min-h-[260px] flex-col items-center justify-center text-center"
           >
-            <div className="relative grid size-16 place-items-center rounded-3xl bg-accent-soft">
+            <div className="relative grid size-16 place-items-center rounded-3xl bg-accent/10">
               <span className="absolute inset-0 animate-breathe rounded-3xl bg-accent/20 blur-xl" />
               <SparkleIcon className="relative size-7 text-accent" />
             </div>
             <h3 className="text-gradient mt-4 text-[34px] font-semibold tracking-tight">Süre doldu</h3>
             <p className="mt-1.5 max-w-[300px] text-[13px] leading-relaxed text-muted">
-              {countdown.title ? `${countdown.title} için belirlenen an geldi.` : "Belirlediğin an geldi."}{" "}
+              Belirlediğin süre tamamlandı.{" "}
               <span className="text-faint">{formatIstanbulDateTime(new Date(countdown.targetAt))}</span>
             </p>
-            <div className="mt-5 flex items-center gap-2">
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
               <button
                 type="button"
                 onClick={openForm}
                 className="h-10 rounded-xl border border-line px-4 text-[13px] text-muted transition-colors hover:bg-surface/60 hover:text-fg"
               >
-                Yeni hedef
+                Yeni süre
               </button>
-              <ClearButton confirmClear={confirmClear} onAsk={() => setConfirmClear(true)} onConfirm={clear} onCancel={() => setConfirmClear(false)} disabled={saving} />
+              <button
+                type="button"
+                onClick={replayAlarm}
+                className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-accent/25 bg-accent/10 px-3.5 text-[13px] text-accent transition-colors hover:bg-accent/15"
+              >
+                <BellIcon className="size-3.5" />
+                Sesi çal
+              </button>
+              <ClearButton
+                confirmClear={confirmClear}
+                onAsk={() => setConfirmClear(true)}
+                onConfirm={clear}
+                onCancel={() => setConfirmClear(false)}
+                disabled={saving}
+              />
             </div>
+            {error && (
+              <p role="alert" className="mt-3 rounded-xl border border-coral/25 bg-coral/10 px-3 py-2 text-[12px] text-coral">
+                {error}
+              </p>
+            )}
           </motion.div>
         ) : (
           <motion.div
@@ -341,9 +327,9 @@ export function CountdownTab() {
               aria-label={
                 now === null
                   ? "Kalan süre hesaplanıyor"
-                  : `${units[0]?.value ?? 0} gün ${units[1]?.value ?? 0} saat ${units[2]?.value ?? 0} dakika ${units[3]?.value ?? 0} saniye kaldı`
+                  : `${units[0]?.value ?? 0} saat ${units[1]?.value ?? 0} dakika ${units[2]?.value ?? 0} saniye kaldı`
               }
-              className="grid grid-cols-4 gap-1.5 sm:gap-3"
+              className="grid grid-cols-3 gap-1.5 sm:gap-3"
             >
               {units.map((unit, i) => (
                 <div
@@ -371,6 +357,10 @@ export function CountdownTab() {
               ))}
             </div>
 
+            {countdown.title && (
+              <p className="mt-4 text-center text-[12px] text-muted">{countdown.title}</p>
+            )}
+
             <div className="mt-4 flex items-center justify-between gap-3">
               <p className="flex items-center gap-1.5 text-[11px] text-faint">
                 <CalendarIcon className="size-3.5" />
@@ -385,7 +375,13 @@ export function CountdownTab() {
                   <EditIcon className="size-3.5" />
                   Düzenle
                 </button>
-                <ClearButton confirmClear={confirmClear} onAsk={() => setConfirmClear(true)} onConfirm={clear} onCancel={() => setConfirmClear(false)} disabled={saving} />
+                <ClearButton
+                  confirmClear={confirmClear}
+                  onAsk={() => setConfirmClear(true)}
+                  onConfirm={clear}
+                  onCancel={() => setConfirmClear(false)}
+                  disabled={saving}
+                />
               </div>
             </div>
 
