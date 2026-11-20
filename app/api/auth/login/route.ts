@@ -9,48 +9,63 @@ const schema = z.object({
   password: z.string().min(1),
 });
 
-const loginAttempts = new Map<string, { count: number; last: number }>();
+const WINDOW_MS = 60_000;
+const MAX_FAILURES = 5;
+const failures = new Map<string, { count: number; first: number }>();
+
+function clientKey(req: NextRequest) {
+  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+}
+
+function isLimited(key: string, now: number) {
+  // Sweep expired entries so the map cannot grow without bound.
+  for (const [k, v] of failures) {
+    if (now - v.first > WINDOW_MS) failures.delete(k);
+  }
+  return (failures.get(key)?.count ?? 0) >= MAX_FAILURES;
+}
+
+function recordFailure(key: string, now: number) {
+  const entry = failures.get(key);
+  if (entry) entry.count += 1;
+  else failures.set(key, { count: 1, first: now });
+}
+
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function invalidCredentials(key: string) {
+  recordFailure(key, Date.now());
+  await delay(500);
+  return NextResponse.json({ error: "Kullanıcı adı veya şifre hatalı" }, { status: 401 });
+}
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: "Geçersiz istek" }, { status: 400 });
     }
 
-    const ip = req.headers.get("x-forwarded-for") || "unknown";
-    const key = ip;
-    const now = Date.now();
-    const attempts = loginAttempts.get(key) || { count: 0, last: now };
-    if (now - attempts.last > 60000) {
-      attempts.count = 0;
+    const key = clientKey(req);
+    if (isLimited(key, Date.now())) {
+      return NextResponse.json(
+        { error: "Çok fazla deneme. Lütfen bir dakika sonra tekrar deneyin." },
+        { status: 429 }
+      );
     }
-    if (attempts.count >= 5) {
-      return NextResponse.json({ error: "Çok fazla deneme. Lütfen bir dakika sonra tekrar deneyin." }, { status: 429 });
-    }
-    attempts.count++;
-    attempts.last = now;
-    loginAttempts.set(key, attempts);
 
     const { username, password } = parsed.data;
     const users = await query<{ Id: number; Username: string; PasswordHash: string }>(
       "SELECT Id, Username, PasswordHash FROM dbo.Users WHERE Username = @username",
       { username }
     );
-    if (users.length === 0) {
-      await new Promise((r) => setTimeout(r, 500));
-      return NextResponse.json({ error: "Kullanıcı adı veya şifre hatalı" }, { status: 401 });
-    }
-
     const user = users[0];
-    const valid = await bcrypt.compare(password, user.PasswordHash);
-    if (!valid) {
-      await new Promise((r) => setTimeout(r, 500));
-      return NextResponse.json({ error: "Kullanıcı adı veya şifre hatalı" }, { status: 401 });
+    if (!user || !(await bcrypt.compare(password, user.PasswordHash))) {
+      return invalidCredentials(key);
     }
 
-    loginAttempts.delete(key);
+    failures.delete(key);
     await createSession(user.Id, user.Username);
     return NextResponse.json({ ok: true });
   } catch {

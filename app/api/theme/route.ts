@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
-import { execute } from "@/lib/db";
+import { requireSession } from "@/lib/auth";
+import { execute, query } from "@/lib/db";
 import { z } from "zod";
 
 const schema = z.object({
@@ -8,10 +8,10 @@ const schema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
+  const { session, response } = await requireSession();
+  if (response) return response;
 
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Geçersiz tema" }, { status: 400 });
 
@@ -24,10 +24,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
+  const { session, response } = await requireSession();
+  if (response) return response;
 
-  const { query } = await import("@/lib/db");
   const rows = await query<{ ThemePreference: "light" | "dark" | "system" | null }>(
     "SELECT ThemePreference FROM dbo.Users WHERE Id = @userId",
     { userId: session.userId }

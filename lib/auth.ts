@@ -1,15 +1,24 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, sessionSecret } from "./session-config";
 
-const COOKIE_NAME = "ttt_session";
+export type Session = { userId: number; username: string };
 
-function getSecret() {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error("JWT_SECRET is not set");
-  }
-  return new TextEncoder().encode(secret);
+function requireSecret() {
+  const secret = sessionSecret();
+  if (!secret) throw new Error("JWT_SECRET is not set");
+  return secret;
+}
+
+function cookieOptions(maxAge: number) {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.COOKIE_SECURE === "true",
+    path: "/",
+    maxAge,
+  };
 }
 
 export async function createSession(userId: number, username: string) {
@@ -17,25 +26,19 @@ export async function createSession(userId: number, username: string) {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
-    .sign(getSecret());
+    .sign(requireSecret());
 
   const cookieStore = await cookies();
-  cookieStore.set(COOKIE_NAME, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.COOKIE_SECURE === "true",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
+  cookieStore.set(SESSION_COOKIE, token, cookieOptions(SESSION_MAX_AGE_SECONDS));
 }
 
-export async function getSession() {
+export async function getSession(): Promise<Session | null> {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get(COOKIE_NAME)?.value;
+    const token = cookieStore.get(SESSION_COOKIE)?.value;
     if (!token) return null;
-    const { payload } = await jwtVerify(token, getSecret());
-    return payload as { userId: number; username: string };
+    const { payload } = await jwtVerify(token, requireSecret());
+    return payload as unknown as Session;
   } catch {
     return null;
   }
@@ -43,31 +46,15 @@ export async function getSession() {
 
 export async function destroySession() {
   const cookieStore = await cookies();
-  cookieStore.set(COOKIE_NAME, "", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.COOKIE_SECURE === "true",
-    path: "/",
-    maxAge: 0,
-  });
+  cookieStore.set(SESSION_COOKIE, "", cookieOptions(0));
 }
 
-export function getSessionFromRequest(req: NextRequest) {
-  try {
-    const token = req.cookies.get(COOKIE_NAME)?.value;
-    if (!token) return null;
-    // Note: verify is async; for middleware we'll do async
-    return token;
-  } catch {
-    return null;
-  }
-}
+export const unauthorized = () => NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
 
-export async function verifySessionToken(token: string) {
-  try {
-    const { payload } = await jwtVerify(token, getSecret());
-    return payload as { userId: number; username: string };
-  } catch {
-    return null;
-  }
+/** Returns the session, or a 401 response for API routes to return as-is. */
+export async function requireSession(): Promise<
+  { session: Session; response?: undefined } | { session?: undefined; response: NextResponse }
+> {
+  const session = await getSession();
+  return session ? { session } : { response: unauthorized() };
 }

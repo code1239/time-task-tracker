@@ -1,42 +1,27 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { SESSION_COOKIE, sessionSecret } from "@/lib/session-config";
 
-const COOKIE_NAME = "ttt_session";
-
-function getSecret() {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) return null;
-  return new TextEncoder().encode(secret);
+async function hasValidSession(req: NextRequest) {
+  const token = req.cookies.get(SESSION_COOKIE)?.value;
+  const secret = sessionSecret();
+  if (!token || !secret) return false;
+  try {
+    await jwtVerify(token, secret);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function proxy(req: NextRequest) {
-  const { pathname } = req.nextUrl;
-  const token = req.cookies.get(COOKIE_NAME)?.value;
-  const secret = getSecret();
+  const valid = await hasValidSession(req);
 
-  let valid = false;
-  if (token && secret) {
-    try {
-      await jwtVerify(token, secret);
-      valid = true;
-    } catch {
-      valid = false;
-    }
+  if (req.nextUrl.pathname === "/login") {
+    return valid ? NextResponse.redirect(new URL("/", req.url)) : NextResponse.next();
   }
 
-  if (pathname === "/login") {
-    if (valid) {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
-    return NextResponse.next();
-  }
-
-  if (!valid) {
-    const url = new URL("/login", req.url);
-    return NextResponse.redirect(url);
-  }
-
-  return NextResponse.next();
+  return valid ? NextResponse.next() : NextResponse.redirect(new URL("/login", req.url));
 }
 
 export const config = {
