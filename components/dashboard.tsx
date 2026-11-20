@@ -12,6 +12,7 @@ import { CountdownTab } from "./countdown-tab";
 import { NotionTab } from "./notion-tab";
 import { CountdownProvider } from "./countdown-provider";
 import { BullsLogo, PortraitPair } from "./hero-decor";
+import { JordanQuote } from "./jordan-quote";
 import { LogoutIcon } from "./icons";
 import { useTheme, type Theme } from "./theme-provider";
 
@@ -115,7 +116,9 @@ export function Dashboard({
               </div>
             </section>
 
-            <p className="mt-5 text-center text-[10px] uppercase tracking-[0.18em] text-faint/80">
+            <JordanQuote />
+
+            <p className="mt-10 text-center text-[10px] uppercase tracking-[0.18em] text-faint/80">
               Zaman · Europe/Istanbul · UTC+3
             </p>
           </div>

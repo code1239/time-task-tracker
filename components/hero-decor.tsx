@@ -3,7 +3,8 @@
 import { useState } from "react";
 
 /**
- * Decorative frame: two portraits facing each other and a logo that snorts smoke every second.
+ * Decorative frame: two portraits facing each other (with a soft shadow) and a logo
+ * that snorts smoke every second.
  *
  * Image files are supplied by the project owner:
  *   public/decor/jordan.png      (transparent cut-out, subject faces LEFT)
@@ -53,7 +54,7 @@ function Portrait({ side, alt }: { side: "left" | "right"; alt: string }) {
         decoding="async"
         ref={onFailed(() => setOk(false))}
         onError={() => setOk(false)}
-        className="h-auto w-full select-none opacity-90 drop-shadow-[0_20px_40px_rgba(0,0,0,0.45)]"
+        className="h-auto w-full select-none drop-shadow-[0_26px_34px_rgba(12,2,6,0.6)] drop-shadow-[0_0_26px_var(--glow)]"
         style={mirrored ? { transform: "scaleX(-1)" } : undefined}
       />
     </figure>

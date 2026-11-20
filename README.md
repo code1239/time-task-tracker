@@ -31,7 +31,7 @@ A focused, glassmorphic Turkish time/task/countdown web app built with Next.js 1
 - **Countdown** — set a duration like `1h 30m`, `90m`, or `90`. Animated hours/minutes/seconds countdown (up to 24h). When it expires, a Web Audio bell rings until you tap **Stop alarm**. The alarm works across tabs; if the page was closed when it expired, it appears silently as "Time's up".
 - **Theme** — light/dark/system with per-user `Users.ThemePreference` persisted in SQL Server and `localStorage`. No flash on load; login page follows the theme.
 - **Notion** — connect your own Notion account, pick a page and see its to-dos split into to do / done. Today's ticks drive the daily counter, with near-live updates.
-- **Chicago Bulls look** — red palette for light and dark themes, two Michael Jordan portraits facing each other and a Bulls logo that snorts smoke. The images are user-supplied files in `public/decor/` (`jordan.png`, `bulls-logo.png`); a missing file simply renders nothing.
+- **Chicago Bulls look** — soft cocoa-rose dark theme and a red light theme, two Michael Jordan portraits facing each other, a Bulls logo that snorts smoke, and a handwritten Jordan quote that "writes itself" at the bottom. The tab bar has a liquid WebGL glow (three.js shader) that slides under the active tab. The images are user-supplied files in `public/decor/` (`jordan.png`, `bulls-logo.png`); a missing file simply renders nothing.
 - **Polished UI** — aurora/glass aesthetic, reduced-motion support, animations paused when tab is hidden, keyboard-accessible tabs with visible focus.
 - **Auth & Security** — login only (no registration), httpOnly SameSite=Lax JWT cookie, bcrypt hashes, rate-limited login, parameterized queries, least-privilege DB user (`db_datareader`/`db_datawriter`).
 
@@ -40,6 +40,7 @@ A focused, glassmorphic Turkish time/task/countdown web app built with Next.js 1
 - [Next.js 16](https://nextjs.org/) App Router, TypeScript
 - [Tailwind CSS 4](https://tailwindcss.com/)
 - [motion](https://motion.dev/) for animations
+- [three.js](https://threejs.org/) for the tab bar glow shader (lazy loaded)
 - [@number-flow/react](https://number-flow.barvian.me/) for animated digits
 - [mssql](https://www.npmjs.com/package/mssql) for SQL Server
 - [jose](https://github.com/panva/jose) + [bcryptjs](https://github.com/dcodeIO/bcrypt.js) for auth

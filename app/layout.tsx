@@ -1,11 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono, Dancing_Script } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider, themeInitScript } from "@/components/theme-provider";
 import { MotionConfig } from "motion/react";
 
 const inter = Inter({
   variable: "--font-inter",
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+});
+
+// Graceful handwriting for the Michael Jordan quote.
+const handwriting = Dancing_Script({
+  variable: "--font-quote",
   subsets: ["latin", "latin-ext"],
   display: "swap",
 });
@@ -26,7 +33,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#faf6f5" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0607" },
+    { media: "(prefers-color-scheme: dark)", color: "#251619" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -38,7 +45,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="tr"
       suppressHydrationWarning
       data-scroll-behavior="smooth"
-      className={`${inter.variable} ${geistMono.variable}`}
+      className={`${inter.variable} ${geistMono.variable} ${handwriting.variable}`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
