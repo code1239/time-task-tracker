@@ -4,10 +4,12 @@ A focused, glassmorphic Turkish time/task/countdown web app built with Next.js 1
 
 ## Features
 
-- **Turkey Time** — live digital (animated digits) and analog clock, Turkish date formatting. Always `Europe/Istanbul` (UTC+3), independent of the device timezone.
-- **Daily Tasks** — optimistic atomic counter with Istanbul-midnight rollover, 7/30-day animated history chart, and confetti on milestone hits (multiples of 5).
+- **Turkey Time** — live digital (animated digits) and analog clock, Turkish date formatting. Always `Europe/Istanbul` (UTC+3), independent of the device timezone. A fullscreen mode is available from the clock tab (with a CSS fallback where the Fullscreen API is unavailable).
+- **Daily Tasks** — optimistic atomic counter with Istanbul-midnight rollover, 7/30-day animated history chart, and confetti on milestone hits (multiples of 5). When a Notion page is connected, the counter follows it (see Notion Integration).
 - **Countdown** — set a duration like `1h 30m`, `90m`, or `90`. Animated hours/minutes/seconds countdown (up to 24h). When it expires, a Web Audio bell rings until you tap **Stop alarm**. The alarm works across tabs; if the page was closed when it expired, it appears silently as "Time's up".
 - **Theme** — light/dark/system with per-user `Users.ThemePreference` persisted in SQL Server and `localStorage`. No flash on load; login page follows the theme.
+- **Notion** - connect your own Notion account, pick a page and see its to-dos split into to do / done. Today's ticks drive the daily counter, with near-live updates.
+- **Chicago Bulls look** - red palette for light and dark themes, two Michael Jordan portraits facing each other and a Bulls logo that snorts smoke. The images are user-supplied files in `public/decor/` (`jordan.png`, `bulls-logo.png`); a missing file simply renders nothing.
 - **Polished UI** — aurora/glass aesthetic, reduced-motion support, animations paused when tab is hidden, keyboard-accessible tabs with visible focus.
 - **Auth & Security** — login only (no registration), httpOnly SameSite=Lax JWT cookie, bcrypt hashes, rate-limited login, parameterized queries, least-privilege DB user (`db_datareader`/`db_datawriter`).
 
@@ -21,6 +23,7 @@ A focused, glassmorphic Turkish time/task/countdown web app built with Next.js 1
 - [jose](https://github.com/panva/jose) + [bcryptjs](https://github.com/dcodeIO/bcrypt.js) for auth
 - [canvas-confetti](https://www.npmjs.com/package/canvas-confetti)
 - [date-fns-tz](https://www.npmjs.com/package/date-fns-tz)
+- [Notion API](https://developers.notion.com/) (OAuth, read-only) for the Notion tab
 
 ## Requirements
 
@@ -85,7 +88,7 @@ docker compose up -d --build
 # DB_SERVER=db DB_PORT=1433 DB_ADMIN_PASSWORD=... docker compose --profile db up -d
 ```
 
-Health check: `GET /api/health`. Ensure SQL Server is reachable from the container and TCP/firewall is configured.
+Health check: `GET /api/health`. Ensure SQL Server is reachable from the container and TCP/firewall is configured. The container reads `.env` (including the `NOTION_*` variables) through `env_file`, so rebuild/recreate it after changing `.env` (`docker compose up -d --build`).
 
 ## Notion Integration
 
@@ -100,7 +103,7 @@ Setup:
 
 Updates are near-live: while the Notion tab is visible it polls every 5 s (backing off to 20 s on errors, paused when the tab is hidden), and the Tasks tab refreshes every 8 s while the counter is locked. Notion webhooks are not used: they are batched with a delay of up to a few minutes and need a public HTTPS URL. If the selected page only contains sub-pages (no checkboxes of its own), the tab lists them so you can pick one.
 
-Tokens are encrypted (AES-256-GCM) in the database and never sent to the browser. For local UI work without Notion, run `NOTION_MOCK=1 npm run dev` to get a fixture page (ignored in production).
+Tokens are encrypted (AES-256-GCM) in the database and never sent to the browser. For local UI work without Notion, set `NOTION_MOCK` before `npm run dev`: `1` serves a fixture page, `container` starts on a page that only has sub-pages, `disconnected` shows the connect screen (all ignored in production).
 
 ## Time & Rollover Behavior
 
@@ -127,6 +130,10 @@ Tokens are encrypted (AES-256-GCM) in the database and never sent to the browser
 | Issue | Fix |
 | --- | --- |
 | Theme stuck from another account | Theme is applied on login from `Users.ThemePreference`; reload if needed. |
-| Page keeps reloading in dev | After `next build`, running `next dev` can mix artifacts. `npm run dev` now auto-clears `.next` if `BUILD_ID` exists. Hard-refresh (Ctrl+Shift+R) or reopen the tab. |
+| Page keeps reloading in dev | After `next build`, running `next dev` can mix artifacts. `npm run dev` now auto-clears `.next` if `BUILD_ID` exists. Hard-refresh (Ctrl+Shift+R) or reopen the tab. If it still loops (endless "Compiled" lines in the log), stop the dev server and delete the `.next` folder. |
+| Notion tab says setup is incomplete | The `dbo.NotionConnections` table is missing: run `npm run db:setup`. |
+| Notion connect fails or returns to the app with an error | `NOTION_REDIRECT_URI` must match the redirect URI saved in the Notion integration exactly (use `localhost`, not `127.0.0.1`), and the integration must be a *public* one. |
+| Notion tab shows 0 items | The selected page has no checkbox blocks of its own (for example a year page that only contains sub-pages). Pick one of the listed sub-pages, or use "Change page". |
+| A page is missing from the Notion page picker | Share it with the integration in Notion (page menu, Connections) and reopen the picker. |
 | Wrong time shown | Timezone is fixed to `Europe/Istanbul`. If the device clock is wrong, the digital clock will reflect it. |
 | Cannot connect to SQL from Docker | Use `host.docker.internal` with TCP enabled and firewall open, or use the `db` compose profile. |
