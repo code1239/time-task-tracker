@@ -55,7 +55,7 @@ export function AnalogClock({ parts, className = "" }: Props) {
     <div role="img" aria-label={label} className={`relative aspect-square ${className}`}>
       <div
         aria-hidden="true"
-        className="absolute inset-0 rounded-full bg-[var(--glass-strong)] shadow-[0_18px_40px_-18px_rgba(40,20,110,0.35)] dark:shadow-[0_24px_60px_-24px_rgba(0,0,0,0.65)]"
+        className="absolute inset-0 rounded-full bg-[var(--glass-strong)] shadow-[0_18px_40px_-18px_rgba(120,20,35,0.3)] dark:shadow-[0_24px_60px_-24px_rgba(0,0,0,0.65)]"
       />
 
       <ClockFace />

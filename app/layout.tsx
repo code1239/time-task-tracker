@@ -25,8 +25,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f4fc" },
-    { media: "(prefers-color-scheme: dark)", color: "#06050d" },
+    { media: "(prefers-color-scheme: light)", color: "#faf6f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0607" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -44,7 +44,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-dvh font-sans">
-        <MotionConfig reducedMotion="always">
+        <MotionConfig reducedMotion="user">
           <ThemeProvider>
             {children}
           </ThemeProvider>

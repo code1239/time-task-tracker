@@ -23,7 +23,7 @@ export function TasksTab() {
   const seq = useRef(0);
   const plusRef = useRef<HTMLButtonElement>(null);
 
-  const loadToday = useCallback(async () => {
+  const loadToday = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
     try {
       const res = await fetch("/api/tasks/today", { cache: "no-store" });
       if (!res.ok) throw new Error("failed");
@@ -37,7 +37,7 @@ export function TasksTab() {
         dateRef.current = data.date;
       }
     } catch {
-      setError("Görev sayısı yüklenemedi. Sayfayı yenilemeyi deneyin.");
+      if (!silent) setError("Görev sayısı yüklenemedi. Sayfayı yenilemeyi deneyin.");
     }
   }, []);
 
@@ -136,7 +136,7 @@ export function TasksTab() {
         scalar: 0.75,
         ticks: 110,
         origin,
-        colors: ["#7c5cff", "#39e0cf", "#ff9b79", "#ffffff"],
+        colors: ["#ce1141", "#ef5468", "#eda35c", "#ffffff"],
         disableForReducedMotion: true,
       });
     } catch {
@@ -180,20 +180,8 @@ export function TasksTab() {
         setError("Değişiklik kaydedilemedi. Tekrar deneniyor…");
       } finally {
         inflight.current -= 1;
-        if (inflight.current === 0) {
-          try {
-            const res = await fetch("/api/tasks/today", { cache: "no-store" });
-            if (res.ok) {
-              const data = await res.json();
-              if (typeof data.count === "number") {
-                setCount(data.count);
-                countRef.current = data.count;
-              }
-            }
-          } catch {
-            // keep optimistic value
-          }
-        }
+        // Reconcile with the server once the last in-flight write settles.
+        if (inflight.current === 0) loadToday({ silent: true });
       }
     })();
   }
@@ -275,7 +263,7 @@ export function TasksTab() {
         </motion.button>
       </div>
 
-      <div className="mt-3 grid h-6 place-items-center">
+      <div className="mt-3 grid h-6 place-items-center" role="status" aria-live="polite">
         <AnimatePresence mode="wait">
           {milestone ? (
             <motion.p
@@ -302,6 +290,7 @@ export function TasksTab() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             role="alert"
+            aria-live="assertive"
             className="mt-2 overflow-hidden rounded-xl border border-coral/25 bg-coral/10 px-3 py-2 text-center text-[12px] text-coral"
           >
             {error}

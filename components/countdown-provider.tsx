@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -58,6 +59,11 @@ export function CountdownProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [ringTarget, setRingTarget] = useState<string | null>(null);
+  const ringTargetRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    ringTargetRef.current = ringTarget;
+  }, [ringTarget]);
 
   // İlk veri: sayfa açılışında bir kez.
   useEffect(() => {
@@ -141,10 +147,9 @@ export function CountdownProvider({ children }: { children: ReactNode }) {
 
   const dismissAlarm = useCallback(() => {
     stopAlarm();
-    setRingTarget((current) => {
-      if (current) markDismissed(current);
-      return null;
-    });
+    const current = ringTargetRef.current;
+    if (current) markDismissed(current);
+    setRingTarget(null);
   }, []);
 
   const updateCountdown = useCallback((next: Countdown | null) => {
@@ -182,6 +187,12 @@ function AlarmBanner({
   onDismiss: () => void;
 }) {
   const reduce = useReducedMotion();
+  const stopRef = useRef<HTMLButtonElement>(null);
+
+  // Move focus to the stop button so the alarm can be silenced from the keyboard.
+  useEffect(() => {
+    if (targetAt) stopRef.current?.focus();
+  }, [targetAt]);
 
   return (
     <AnimatePresence>
@@ -205,8 +216,9 @@ function AlarmBanner({
           </div>
           <button
             type="button"
+            ref={stopRef}
             onClick={onDismiss}
-            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-accent px-3 text-[12px] font-medium text-white shadow-glow transition-[filter] hover:brightness-110"
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-accent px-3 text-[12px] font-medium text-white shadow-glow transition-[filter] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2"
           >
             <StopIcon className="size-3.5" />
             Sesi durdur

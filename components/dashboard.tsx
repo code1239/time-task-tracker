@@ -10,6 +10,7 @@ import { ClockTab } from "./clock-tab";
 import { TasksTab } from "./tasks-tab";
 import { CountdownTab } from "./countdown-tab";
 import { CountdownProvider } from "./countdown-provider";
+import { BullsLogo, PortraitPair } from "./hero-decor";
 import { LogoutIcon } from "./icons";
 import { useTheme, type Theme } from "./theme-provider";
 
@@ -49,7 +50,8 @@ export function Dashboard({
 
   return (
     <CountdownProvider>
-      <div className="relative flex min-h-dvh flex-col px-4 pb-10 pt-4 sm:px-6 sm:pb-12 sm:pt-6">
+      <PortraitPair />
+      <div className="relative z-10 flex min-h-dvh flex-col px-4 pb-10 pt-4 sm:px-6 sm:pb-12 sm:pt-6">
         <header className="relative z-20 mx-auto flex w-full max-w-[980px] items-center justify-between gap-3">
           <Brand />
 
@@ -84,6 +86,7 @@ export function Dashboard({
 
         <main className="mx-auto flex w-full max-w-[660px] flex-1 flex-col justify-center pb-4 pt-12 sm:pt-16">
           <div className="-translate-y-1 sm:-translate-y-6">
+            <BullsLogo />
             <div className="mb-3 sm:mb-4">
               <TabBar active={tab} onChange={setTab} />
             </div>
@@ -95,7 +98,13 @@ export function Dashboard({
               <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
               <div className="pointer-events-none absolute -right-16 -top-24 size-48 rounded-full bg-accent/10 blur-3xl" />
 
-              <div className="relative" role="tabpanel" aria-label={tab === "clock" ? "Türkiye Saati" : tab === "tasks" ? "Yapılan Görev" : "Geri Sayım"}>
+              <div
+                key={tab}
+                className="relative"
+                role="tabpanel"
+                id={`panel-${tab}`}
+                aria-labelledby={`tab-${tab}`}
+              >
                 {tab === "clock" && <ClockTab />}
                 {tab === "tasks" && <TasksTab />}
                 {tab === "countdown" && <CountdownTab />}
