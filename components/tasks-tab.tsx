@@ -19,6 +19,8 @@ export function TasksTab() {
   const [chartLoading, setChartLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [milestone, setMilestone] = useState<string | null>(null);
+  // True while a Notion page drives the counter (+/- are disabled).
+  const [locked, setLocked] = useState(false);
   const inflight = useRef(0);
   const seq = useRef(0);
   const plusRef = useRef<HTMLButtonElement>(null);
@@ -32,6 +34,7 @@ export function TasksTab() {
         setCount(data.count);
         countRef.current = data.count;
       }
+      if (typeof data.locked === "boolean") setLocked(data.locked);
       if (typeof data.date === "string") {
         setDate(data.date);
         dateRef.current = data.date;
@@ -104,6 +107,23 @@ export function TasksTab() {
     };
   }, [checkDay]);
 
+  // While Notion drives the counter, pick up ticks made in Notion.
+  useEffect(() => {
+    if (!locked) return;
+    const refresh = () => {
+      if (document.visibilityState === "visible") {
+        loadToday({ silent: true });
+        loadHistory(daysRef.current);
+      }
+    };
+    const interval = setInterval(refresh, 8_000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [locked, loadToday, loadHistory]);
+
   useEffect(() => {
     if (!error) return;
     const t = setTimeout(() => setError(null), 5000);
@@ -146,7 +166,7 @@ export function TasksTab() {
 
   function change(delta: number) {
     const current = countRef.current;
-    if (current === null) return;
+    if (current === null || locked) return;
     const next = Math.max(0, current + delta);
     if (next === current) return;
 
@@ -208,7 +228,7 @@ export function TasksTab() {
         <motion.button
           type="button"
           onClick={() => change(-1)}
-          disabled={count === null || isAtZero}
+          disabled={count === null || isAtZero || locked}
           aria-label="Görev sayısını bir azalt"
           whileHover={reduce || isAtZero ? undefined : { scale: 1.06, y: -1 }}
           whileTap={reduce || isAtZero ? undefined : { scale: 0.92 }}
@@ -239,12 +259,12 @@ export function TasksTab() {
           ref={plusRef}
           type="button"
           onClick={() => change(1)}
-          disabled={count === null}
+          disabled={count === null || locked}
           aria-label="Görev sayısını bir artır"
           whileHover={reduce ? undefined : { scale: 1.06, y: -1 }}
           whileTap={reduce ? undefined : { scale: 0.92 }}
           transition={{ type: "spring", stiffness: 500, damping: 26 }}
-          className="accent-gradient relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-full text-white shadow-glow transition-[filter] duration-200 hover:brightness-110 sm:size-14"
+          className="accent-gradient relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-full text-white shadow-glow transition-[filter] duration-200 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100 sm:size-14"
         >
           <span className="absolute inset-0 bg-gradient-to-b from-white/25 to-transparent" />
           <PlusIcon className="relative size-5" />
@@ -278,7 +298,11 @@ export function TasksTab() {
               {milestone}
             </motion.p>
           ) : (
-            <p className="text-[12px] text-faint">Her tıklama anında kaydedilir.</p>
+            <p className="text-[12px] text-faint">
+              {locked
+                ? "Sayı, Notion sayfanda bugün tiklediğin görevlerden geliyor."
+                : "Her tıklama anında kaydedilir."}
+            </p>
           )}
         </AnimatePresence>
       </div>

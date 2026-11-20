@@ -9,6 +9,7 @@ import { TabBar, type TabId } from "./tab-bar";
 import { ClockTab } from "./clock-tab";
 import { TasksTab } from "./tasks-tab";
 import { CountdownTab } from "./countdown-tab";
+import { NotionTab } from "./notion-tab";
 import { CountdownProvider } from "./countdown-provider";
 import { BullsLogo, PortraitPair } from "./hero-decor";
 import { LogoutIcon } from "./icons";
@@ -17,11 +18,13 @@ import { useTheme, type Theme } from "./theme-provider";
 export function Dashboard({
   username,
   themePreference,
+  initialTab = "clock",
 }: {
   username: string;
   themePreference: Theme | null;
+  initialTab?: TabId;
 }) {
-  const [tab, setTab] = useState<TabId>("clock");
+  const [tab, setTab] = useState<TabId>(initialTab);
   const [loggingOut, setLoggingOut] = useState(false);
   const router = useRouter();
   const reduce = useReducedMotion();
@@ -108,6 +111,7 @@ export function Dashboard({
                 {tab === "clock" && <ClockTab />}
                 {tab === "tasks" && <TasksTab />}
                 {tab === "countdown" && <CountdownTab />}
+                {tab === "notion" && <NotionTab />}
               </div>
             </section>
 

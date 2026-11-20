@@ -162,6 +162,21 @@ async function main() {
       END
     `);
 
+    await dbPool.request().query(`
+      IF OBJECT_ID('dbo.NotionConnections', 'U') IS NULL
+      BEGIN
+        CREATE TABLE dbo.NotionConnections (
+          UserId INT NOT NULL PRIMARY KEY,
+          AccessCipher NVARCHAR(MAX) NOT NULL,
+          WorkspaceName NVARCHAR(200) NULL,
+          PageId NVARCHAR(64) NULL,
+          PageTitle NVARCHAR(300) NULL,
+          CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+          CONSTRAINT FK_NotionConnections_Users FOREIGN KEY (UserId) REFERENCES dbo.Users(Id) ON DELETE CASCADE
+        );
+      END
+    `);
+
     console.log("Tüm tablolar hazır.");
     await dbPool.close();
     console.log("Kurulum tamamlandı.");

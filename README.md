@@ -44,6 +44,9 @@ Copy `.env.example` to `.env` (runtime) and/or `.env.local` (local dev). All sec
 | `COOKIE_SECURE` | no | `true` to set `Secure` flag (set behind HTTPS) |
 | `DB_ADMIN_USER` | setup only | SA/admin user used by `npm run db:setup` |
 | `DB_ADMIN_PASSWORD` | setup only | SA/admin password used by `npm run db:setup` |
+| `NOTION_CLIENT_ID` / `NOTION_CLIENT_SECRET` | for Notion | OAuth credentials of your Notion *public* integration |
+| `NOTION_REDIRECT_URI` | for Notion | Must match the integration redirect URI (default `http://localhost:3000/api/notion/callback`) |
+| `NOTION_TOKEN_KEY` | no | Key for encrypting stored Notion tokens (defaults to one derived from `JWT_SECRET`) |
 
 See [`.env.example`](.env.example) for a filled template.
 
@@ -83,6 +86,21 @@ docker compose up -d --build
 ```
 
 Health check: `GET /api/health`. Ensure SQL Server is reachable from the container and TCP/firewall is configured.
+
+## Notion Integration
+
+Each signed-in user can connect their own Notion account in the **Notion** tab, pick one page, and see its to-dos (checkbox blocks) split into a "to do" list and a "done" list. The number of to-dos ticked **today** (Istanbul time, using the block last_edited_time) becomes today's count in the **Tasks** tab; while a page is selected the +/- buttons there are disabled. The integration is read-only.
+
+Setup:
+
+1. Create a **public** integration at <https://www.notion.so/profile/integrations> with the *Read content* capability and set its redirect URI (for example `http://localhost:3000/api/notion/callback`). Notion's form asks for a company name and privacy/terms URLs.
+2. Put `NOTION_CLIENT_ID`, `NOTION_CLIENT_SECRET` and `NOTION_REDIRECT_URI` in `.env`.
+3. Run `npm run db:setup` once (creates `dbo.NotionConnections`; the app DB user cannot create tables). Rebuild the Docker image after changing `.env`.
+4. In the app: **Notion** tab, then connect, share the page(s) you want on Notion's consent screen, and choose the page in the picker.
+
+Updates are near-live: while the Notion tab is visible it polls every 5 s (backing off to 20 s on errors, paused when the tab is hidden), and the Tasks tab refreshes every 8 s while the counter is locked. Notion webhooks are not used: they are batched with a delay of up to a few minutes and need a public HTTPS URL. If the selected page only contains sub-pages (no checkboxes of its own), the tab lists them so you can pick one.
+
+Tokens are encrypted (AES-256-GCM) in the database and never sent to the browser. For local UI work without Notion, run `NOTION_MOCK=1 npm run dev` to get a fixture page (ignored in production).
 
 ## Time & Rollover Behavior
 

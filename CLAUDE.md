@@ -23,9 +23,10 @@ npm run user:list
 - `lib/db.ts` — tek `mssql` pool'u; `query`/`execute` her zaman parametreli (`@name`) çalışır.
 - `lib/date.ts` — tüm tarih mantığı `Europe/Istanbul`'a sabit; "bugün" daima sunucuda `getIstanbulDateString()` ile hesaplanır.
 - `lib/duration.ts` — geri sayım süresi ayrıştırma (saf fonksiyonlar). `lib/alarm.ts` — Web Audio çan sesi.
-- `app/api/*` — `auth`, `tasks/{today,update,history}`, `countdown`, `theme`, `health`. Girdi `zod` ile doğrulanır, hata mesajları Türkçe.
+- `app/api/*` — `auth`, `tasks/{today,update,history}`, `countdown`, `theme`, `notion/{connect,callback,pages,todos,disconnect}`, `health`. Girdi `zod` ile doğrulanır, hata mesajları Türkçe.
 - `components/` — client bileşenleri. `Dashboard` sekmeleri (`clock`, `tasks`, `countdown`) taşır; `CountdownProvider` alarmı uygulama genelinde yönetir; `ThemeProvider` + `themeInitScript` flash'sız tema sağlar.
-- Veritabanı tabloları: `Users`, `DailyTaskCounts (UserId, CountDate)`, `Countdowns (UserId)`.
+- Notion: `lib/notion.ts` (OAuth token takası, sayfa listesi, blok ağacı, `flattenTodos`, `getTodoSnapshot`), `lib/crypto.ts` (token şifreleme), `app/api/notion/*`, `components/notion-tab.tsx`. Sayfa seçiliyken "Yapılan Görev" sayacı Notion'a kilitlidir: bugün (İstanbul) tiklenen to_do sayısı `getTodoSnapshot` ile `DailyTaskCounts`'a yazılır ve `POST /api/tasks/update` 409 döner. Güncelleme canlıya yakındır: Notion sekmesi görünürken 5 sn'de bir (hata olursa 20 sn'ye kadar geri çekilerek) poll eder, sekme gizliyken durur; sunucuda 3 sn önbellek + tek-uçuş (`inflight`) vardır, Notion erişilemezse son iyi veri `stale` olarak döner. Seçilen sayfada onay kutusu yok ama alt sayfa varsa sekme alt sayfaları seçtirir (`collectChildPages`). Webhook kullanılmaz (gecikmeli, herkese açık HTTPS ister). Geliştirmede `NOTION_MOCK=1` sahte sayfa, `NOTION_MOCK=container` alt sayfalı kap sayfa, `NOTION_MOCK=disconnected` bağlan ekranı verir.
+- Veritabanı tabloları: `Users`, `DailyTaskCounts (UserId, CountDate)`, `Countdowns (UserId)`, `NotionConnections (UserId)` (yalnızca `npm run db:setup` ile oluşur).
 
 ## Kurallar
 

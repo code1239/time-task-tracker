@@ -2,14 +2,16 @@
 
 import { useRef } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { CheckCircleIcon, ClockIcon, HourglassIcon } from "./icons";
+import { CheckCircleIcon, ChecklistIcon, ClockIcon, HourglassIcon } from "./icons";
+import type { TabId } from "@/lib/tabs";
 
-export type TabId = "clock" | "tasks" | "countdown";
+export type { TabId };
 
 export const TABS: { id: TabId; label: string; Icon: typeof ClockIcon }[] = [
   { id: "clock", label: "Türkiye Saati", Icon: ClockIcon },
   { id: "tasks", label: "Yapılan Görev", Icon: CheckCircleIcon },
   { id: "countdown", label: "Geri Sayım", Icon: HourglassIcon },
+  { id: "notion", label: "Notion", Icon: ChecklistIcon },
 ];
 
 export function TabBar({
@@ -40,7 +42,7 @@ export function TabBar({
       role="tablist"
       aria-label="Ana bölümler"
       onKeyDown={onKeyDown}
-      className="glass-pill mx-auto flex w-full max-w-[400px] items-center gap-0.5 rounded-full p-1.5"
+      className="glass-pill mx-auto flex w-full max-w-[480px] items-center gap-0.5 rounded-full p-1.5"
     >
       {TABS.map(({ id, label, Icon }, i) => {
         const selected = active === id;
@@ -57,7 +59,7 @@ export function TabBar({
             tabIndex={selected ? 0 : -1}
             type="button"
             onClick={() => onChange(id)}
-            className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-full px-2 py-2 text-[11.5px] font-medium tracking-tight transition-colors duration-200 sm:px-3 sm:text-[13px] ${
+            className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-full px-1 py-2 text-[11px] font-medium tracking-tight transition-colors duration-200 sm:px-3 sm:text-[13px] ${
               selected ? "text-accent" : "text-muted hover:text-fg"
             }`}
           >

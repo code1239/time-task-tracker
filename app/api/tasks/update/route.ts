@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireSession } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { getIstanbulDateString } from "@/lib/date";
+import { isCounterLocked } from "@/lib/notion";
 import { z } from "zod";
 
 const schema = z.object({
@@ -11,6 +12,11 @@ const schema = z.object({
 export async function POST(req: NextRequest) {
   const { session, response } = await requireSession();
   if (response) return response;
+
+  // The counter is driven by the user's Notion page while one is selected.
+  if (await isCounterLocked(session.userId).catch(() => false)) {
+    return NextResponse.json({ error: "Sayaç Notion'a bağlı" }, { status: 409 });
+  }
 
   let body: unknown;
   try {
