@@ -1,9 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { CheckCircleIcon, ChecklistIcon, ClockIcon, HourglassIcon } from "./icons";
-import { NavGlow } from "./nav-glow";
 import type { TabId } from "@/lib/tabs";
 
 export type { TabId };
@@ -24,9 +23,6 @@ export function TabBar({
 }) {
   const reduce = useReducedMotion();
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
-  const listRef = useRef<HTMLDivElement>(null);
-  // Once the WebGL glow is running it replaces the CSS indicator below.
-  const [glowReady, setGlowReady] = useState(false);
 
   function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     const index = TABS.findIndex((t) => t.id === active);
@@ -43,13 +39,11 @@ export function TabBar({
 
   return (
     <div
-      ref={listRef}
       role="tablist"
       aria-label="Ana bölümler"
       onKeyDown={onKeyDown}
-      className="glass-pill relative mx-auto flex w-full max-w-[480px] items-center gap-0.5 rounded-full p-1.5"
+      className="glass-pill mx-auto flex w-full max-w-[480px] items-center gap-0.5 rounded-full p-1.5"
     >
-      <NavGlow containerRef={listRef} activeId={active} onReady={() => setGlowReady(true)} />
       {TABS.map(({ id, label, Icon }, i) => {
         const selected = active === id;
         return (
@@ -69,18 +63,14 @@ export function TabBar({
               selected ? "text-accent" : "text-muted hover:text-fg"
             }`}
           >
-            {selected && !glowReady && (
+            {selected && (
               <motion.span
                 layoutId="main-tab-indicator"
                 className="absolute inset-0 rounded-full bg-accent-soft shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_6px_18px_-10px_var(--glow)] ring-1 ring-inset ring-white/10"
                 transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 380, damping: 32 }}
               />
             )}
-            <Icon
-              className={`relative z-10 hidden size-[15px] transition-transform duration-300 sm:block ${
-                selected ? "scale-110 drop-shadow-[0_0_6px_var(--glow)]" : ""
-              }`}
-            />
+            <Icon className="relative z-10 hidden size-[15px] sm:block" />
             <span className="relative z-10 whitespace-nowrap">{label}</span>
           </button>
         );
