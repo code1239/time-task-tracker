@@ -38,7 +38,7 @@ Sunucu önizlemesi için `.claude/launch.json` (git'e girmez) `dev`, `dev-notion
 - Arayüz metinleri Türkçe; kod, yorum ve commit mesajları İngilizce/Türkçe karışık olabilir, mevcut dosyanın diline uy.
 - SQL'e asla string birleştirme ile değer koyma; parametre kullan.
 - Secret'lar (`.env`, `.env.local`, Notion client secret) git'e girmez; push öncesi geçmişte secret değeri olmadığını doğrula. Repo public olabilir.
-- `README.md` Windows-1252 kodlamalıdır: Edit/Write araçları reddeder; bayt-korumalı (`latin1`) ve yalnızca ASCII metinle düzenle.
+- `README.md` portfolyo vitrinidir: ekran görüntüleri `docs/screenshots/` altında; dürüst kal (test paketi yok), kişisel/Notion verisi koyma.
 - Animasyonlar `prefers-reduced-motion`'a saygı göstermeli (`MotionConfig reducedMotion="user"`).
 - Next.js API'leri eğitim verisinden farklı olabilir; kod yazmadan önce `node_modules/next/dist/docs/` oku.
 

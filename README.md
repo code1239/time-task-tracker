@@ -1,17 +1,39 @@
 # Time & Task Tracker
 
-A focused, glassmorphic Turkish time/task/countdown web app built with Next.js 16 (App Router), TypeScript, Tailwind CSS, SQL Server, and Docker.
+A focused, glassmorphic Turkish time/task/countdown web app built with Next.js 16 (App Router), TypeScript, Tailwind CSS, SQL Server, and Docker. It shows Turkey time, counts the tasks you finish each day, runs a countdown with an alarm, and can pull your to-dos from Notion (OAuth).
+
+> Portfolio project. It needs a SQL Server instance, so there is no hosted demo; run it locally or with Docker (see below). The UI is in Turkish.
+
+## Screenshots
+
+| Turkey time | Notion tab |
+| --- | --- |
+| ![Turkey time with digital and analog clock](docs/screenshots/clock.jpg) | ![Notion tab with to-dos split into to do and done](docs/screenshots/notion.jpg) |
+
+| Countdown | Mobile |
+| --- | --- |
+| ![Countdown setup](docs/screenshots/countdown.jpg) | <img src="docs/screenshots/mobile.jpg" alt="Notion tab on a phone" width="240"> |
+
+## Engineering Highlights
+
+- **Time zone done properly** — every date is computed on the server in `Europe/Istanbul`, never from the device clock; the daily counter rolls over at Istanbul midnight even if no tab is open.
+- **Optimistic, race-safe counter** — the UI updates instantly while requests are sequenced, the server writes with an atomic `MERGE ... OUTPUT`, and the client reconciles once the last in-flight write settles.
+- **Notion OAuth without leaking tokens** — per-user tokens are encrypted with AES-256-GCM in the database, the flow is protected by a CSRF `state` cookie, and the browser never sees a token. The app only ever reads.
+- **Near-live sync without webhooks** — adaptive polling (5 s, backing off to 20 s, paused while the tab is hidden) with a short server cache, single-flight requests and stale-data fallback. Notion webhooks are delayed and need a public URL, so polling fits better.
+- **Defensive API layer** — `zod` validation, one `requireSession()` helper, parameterized SQL only, a rate-limited login, and a cached connection pool shared across requests.
+- **Accessible, motion-aware UI** — keyboard-navigable tabs wired with ARIA, live regions for status changes, and animations that follow `prefers-reduced-motion`.
+- **Pure, easily testable core** — the tricky logic (duration parsing, to-do flattening with Istanbul day boundaries, token encryption) lives in small functions with no React or DOM dependencies. There is no automated test suite yet; `npm run lint` and `npm run build` are the checks.
 
 ## Features
 
-- **Turkey Time** � live digital (animated digits) and analog clock, Turkish date formatting. Always `Europe/Istanbul` (UTC+3), independent of the device timezone. A fullscreen mode is available from the clock tab (with a CSS fallback where the Fullscreen API is unavailable).
-- **Daily Tasks** � optimistic atomic counter with Istanbul-midnight rollover, 7/30-day animated history chart, and confetti on milestone hits (multiples of 5). When a Notion page is connected, the counter follows it (see Notion Integration).
-- **Countdown** � set a duration like `1h 30m`, `90m`, or `90`. Animated hours/minutes/seconds countdown (up to 24h). When it expires, a Web Audio bell rings until you tap **Stop alarm**. The alarm works across tabs; if the page was closed when it expired, it appears silently as "Time's up".
-- **Theme** � light/dark/system with per-user `Users.ThemePreference` persisted in SQL Server and `localStorage`. No flash on load; login page follows the theme.
-- **Notion** - connect your own Notion account, pick a page and see its to-dos split into to do / done. Today's ticks drive the daily counter, with near-live updates.
-- **Chicago Bulls look** - red palette for light and dark themes, two Michael Jordan portraits facing each other and a Bulls logo that snorts smoke. The images are user-supplied files in `public/decor/` (`jordan.png`, `bulls-logo.png`); a missing file simply renders nothing.
-- **Polished UI** � aurora/glass aesthetic, reduced-motion support, animations paused when tab is hidden, keyboard-accessible tabs with visible focus.
-- **Auth & Security** � login only (no registration), httpOnly SameSite=Lax JWT cookie, bcrypt hashes, rate-limited login, parameterized queries, least-privilege DB user (`db_datareader`/`db_datawriter`).
+- **Turkey Time** — live digital (animated digits) and analog clock, Turkish date formatting. Always `Europe/Istanbul` (UTC+3), independent of the device timezone. A fullscreen mode is available from the clock tab (with a CSS fallback where the Fullscreen API is unavailable).
+- **Daily Tasks** — optimistic atomic counter with Istanbul-midnight rollover, 7/30-day animated history chart, and confetti on milestone hits (multiples of 5). When a Notion page is connected, the counter follows it (see Notion Integration).
+- **Countdown** — set a duration like `1h 30m`, `90m`, or `90`. Animated hours/minutes/seconds countdown (up to 24h). When it expires, a Web Audio bell rings until you tap **Stop alarm**. The alarm works across tabs; if the page was closed when it expired, it appears silently as "Time's up".
+- **Theme** — light/dark/system with per-user `Users.ThemePreference` persisted in SQL Server and `localStorage`. No flash on load; login page follows the theme.
+- **Notion** — connect your own Notion account, pick a page and see its to-dos split into to do / done. Today's ticks drive the daily counter, with near-live updates.
+- **Chicago Bulls look** — red palette for light and dark themes, two Michael Jordan portraits facing each other and a Bulls logo that snorts smoke. The images are user-supplied files in `public/decor/` (`jordan.png`, `bulls-logo.png`); a missing file simply renders nothing.
+- **Polished UI** — aurora/glass aesthetic, reduced-motion support, animations paused when tab is hidden, keyboard-accessible tabs with visible focus.
+- **Auth & Security** — login only (no registration), httpOnly SameSite=Lax JWT cookie, bcrypt hashes, rate-limited login, parameterized queries, least-privilege DB user (`db_datareader`/`db_datawriter`).
 
 ## Tech Stack
 
@@ -137,3 +159,7 @@ Tokens are encrypted (AES-256-GCM) in the database and never sent to the browser
 | A page is missing from the Notion page picker | Share it with the integration in Notion (page menu, Connections) and reopen the picker. |
 | Wrong time shown | Timezone is fixed to `Europe/Istanbul`. If the device clock is wrong, the digital clock will reflect it. |
 | Cannot connect to SQL from Docker | Use `host.docker.internal` with TCP enabled and firewall open, or use the `db` compose profile. |
+
+## License
+
+Released under the [MIT License](LICENSE). The Michael Jordan portrait and Chicago Bulls logo in `public/decor/` are not covered by it: they belong to their respective owners and are included only as decoration for this personal project.

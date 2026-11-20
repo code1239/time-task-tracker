@@ -1,6 +1,8 @@
 {
   "name": "time-task-tracker",
   "version": "0.1.0",
+  "description": "Glassmorphic Turkish time, task counter and countdown app with Notion integration (Next.js 16, SQL Server).",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "predev": "node scripts/prepare-dev.mjs",
