@@ -37,32 +37,6 @@ export function MonitorIcon(props: IconProps) {
   );
 }
 
-export function ClockIcon(props: IconProps) {
-  return (
-    <svg {...base} aria-hidden="true" {...props}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3.2 2" />
-    </svg>
-  );
-}
-
-export function CheckCircleIcon(props: IconProps) {
-  return (
-    <svg {...base} aria-hidden="true" {...props}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="m8.5 12.4 2.4 2.4 4.7-5.2" />
-    </svg>
-  );
-}
-
-export function HourglassIcon(props: IconProps) {
-  return (
-    <svg {...base} aria-hidden="true" {...props}>
-      <path d="M7 3h10M7 21h10M8 3c0 4 1.5 5.6 4 6.6-2.5 1-4 2.6-4 6.4M16 3c0 4-1.5 5.6-4 6.6 2.5 1 4 2.6 4 6.4" />
-    </svg>
-  );
-}
-
 export function PlusIcon(props: IconProps) {
   return (
     <svg {...base} strokeWidth={2.1} aria-hidden="true" {...props}>
@@ -83,15 +57,6 @@ export function LogoutIcon(props: IconProps) {
   return (
     <svg {...base} aria-hidden="true" {...props}>
       <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h10" />
-    </svg>
-  );
-}
-
-export function CalendarIcon(props: IconProps) {
-  return (
-    <svg {...base} aria-hidden="true" {...props}>
-      <rect x="3.5" y="5" width="17" height="16" rx="2.5" />
-      <path d="M8 3v4M16 3v4M3.5 10h17" />
     </svg>
   );
 }
@@ -118,14 +83,6 @@ export function SparkleIcon(props: IconProps) {
     <svg {...base} aria-hidden="true" {...props}>
       <path d="M12 3.5 13.7 9l5.5 1.7-5.5 1.7L12 18l-1.7-5.6L4.8 10.7 10.3 9 12 3.5Z" />
       <path d="M18.5 16.5 19 18l1.5.5-1.5.5-.5 1.5-.5-1.5L16.5 18l1.5-.5.5-1Z" />
-    </svg>
-  );
-}
-
-export function ArrowUpRightIcon(props: IconProps) {
-  return (
-    <svg {...base} aria-hidden="true" {...props}>
-      <path d="M7 17 17 7M8 7h9v9" />
     </svg>
   );
 }

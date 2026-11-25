@@ -6,10 +6,6 @@ export function getIstanbulDateString(date: Date = new Date()): string {
   return formatInTimeZone(date, TIMEZONE, "yyyy-MM-dd");
 }
 
-export function getIstanbulTimeString(date: Date = new Date()): string {
-  return formatInTimeZone(date, TIMEZONE, "HH:mm");
-}
-
 export function istanbulToUtc(dateStr: string, timeStr: string): Date {
   return fromZonedTime(`${dateStr}T${timeStr}:00`, TIMEZONE);
 }
@@ -50,14 +46,6 @@ export function getIstanbulTimeParts(date: Date) {
     minute: parseInt(get("minute"), 10),
     second: parseInt(get("second"), 10),
   };
-}
-
-export function formatIstanbulDateTime(date: Date): string {
-  return new Intl.DateTimeFormat("tr-TR", {
-    timeZone: TIMEZONE,
-    dateStyle: "long",
-    timeStyle: "short",
-  }).format(date);
 }
 
 export function formatShortDay(dateStr: string): string {

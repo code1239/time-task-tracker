@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import NumberFlow from "@number-flow/react";
 import { useReducedMotion } from "motion/react";
 import { ChecklistIcon, LinkIcon, RefreshIcon, SearchIcon } from "./icons";
@@ -31,10 +31,21 @@ const POLL_MS = 5_000;
 const POLL_MAX_MS = 20_000;
 
 const buttonClass =
-  "glass-pill inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[12px] font-medium text-muted transition-colors hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:opacity-50";
+  "clay-sm inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-[13px] font-bold text-muted transition-colors hover:text-fg disabled:opacity-50";
 
 const primaryClass =
-  "accent-gradient inline-flex h-11 items-center justify-center gap-2 rounded-2xl px-5 text-[13px] font-medium text-white shadow-glow transition-[filter] hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]";
+  "clay-button inline-flex h-12 items-center justify-center gap-2 rounded-full px-7 text-[15px] font-bold";
+
+const alertClass = "rounded-2xl bg-coral/10 px-4 py-3 text-center text-[13px] font-bold text-coral";
+
+/** Centered card for the connect, picker and loading states. */
+function Panel({ children, label }: { children: ReactNode; label?: string }) {
+  return (
+    <section className="clay mx-auto w-full max-w-[680px] p-6 sm:p-8" aria-label={label}>
+      {children}
+    </section>
+  );
+}
 
 export function NotionTab() {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -134,73 +145,78 @@ export function NotionTab() {
     await load(true);
   }
 
+  const connected = snapshot && snapshot.status !== "disconnected" && snapshot.status !== "unavailable";
   const needsPicker = snapshot?.status === "needs_page" || picking;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="inline-flex items-center gap-2 rounded-full glass-inset px-3 py-1.5 text-[11px] font-medium text-muted">
-          <ChecklistIcon className="size-3.5 text-accent" />
-          NOTION
-        </div>
-        {snapshot && snapshot.status !== "disconnected" && snapshot.status !== "unavailable" && (
-          <div className="flex items-center gap-2">
-            {!needsPicker && (
-              <button type="button" onClick={() => load(true)} disabled={refreshing} className={buttonClass}>
-                <RefreshIcon className={`size-3.5 ${refreshing ? "animate-spin" : ""}`} />
-                Yenile
-              </button>
-            )}
-            <DisconnectButton onConfirm={disconnect} />
-          </div>
-        )}
-      </div>
-
+    <div className="flex flex-col gap-4 xl:h-full xl:min-h-[620px]">
       {notice && (
-        <p role="alert" className="rounded-xl border border-coral/25 bg-coral/10 px-3 py-2 text-center text-[12px] text-coral">
+        <p role="alert" className={alertClass}>
           {notice}
         </p>
       )}
 
-      {!snapshot && !loadFailed && <LoadingState />}
+      {!snapshot && !loadFailed && (
+        <Panel label="Notion yükleniyor">
+          <LoadingState />
+        </Panel>
+      )}
 
       {loadFailed && !snapshot && (
-        <div className="grid gap-3 py-6 text-center">
-          <p className="text-[13px] text-muted">Notion bilgileri yüklenemedi.</p>
-          <button type="button" onClick={() => load(true)} className={`${buttonClass} mx-auto`}>
-            <RefreshIcon className="size-3.5" />
-            Tekrar dene
-          </button>
-        </div>
+        <Panel>
+          <div className="grid justify-items-center gap-3 py-4 text-center">
+            <p className="text-[14px] font-semibold text-muted">Notion bilgileri yüklenemedi.</p>
+            <button type="button" onClick={() => load(true)} className={buttonClass}>
+              <RefreshIcon className="size-4" />
+              Tekrar dene
+            </button>
+          </div>
+        </Panel>
       )}
 
-      {snapshot?.status === "disconnected" && <ConnectState />}
+      {snapshot?.status === "disconnected" && (
+        <Panel>
+          <ConnectState />
+        </Panel>
+      )}
 
       {snapshot?.status === "unavailable" && (
-        <p role="alert" className="rounded-xl border border-coral/25 bg-coral/10 px-3 py-3 text-center text-[12px] leading-relaxed text-coral">
-          Notion kurulumu tamamlanmamış: veritabanı tablosu eksik. Yöneticinin <code className="font-mono">npm run db:setup</code>{" "}
-          çalıştırması gerekiyor.
-        </p>
+        <Panel>
+          <p role="alert" className={alertClass}>
+            Notion kurulumu tamamlanmamış: veritabanı tablosu eksik. Yöneticinin{" "}
+            <code className="font-display">npm run db:setup</code> çalıştırması gerekiyor.
+          </p>
+        </Panel>
       )}
 
-      {needsPicker && snapshot && snapshot.status !== "disconnected" && snapshot.status !== "unavailable" && (
-        <PagePicker
-          onDone={async () => {
-            setPicking(false);
-            await load(true);
-          }}
-          onCancel={snapshot.status === "ok" ? () => setPicking(false) : undefined}
-        />
+      {connected && needsPicker && (
+        <Panel label="Sayfa seç">
+          <PagePicker
+            onDone={async () => {
+              setPicking(false);
+              await load(true);
+            }}
+            onCancel={snapshot.status === "ok" ? () => setPicking(false) : undefined}
+            onDisconnect={disconnect}
+          />
+        </Panel>
       )}
 
       {snapshot?.status === "error" && !picking && (
-        <p role="alert" className="rounded-xl border border-coral/25 bg-coral/10 px-3 py-2 text-center text-[12px] text-coral">
+        <p role="alert" className={alertClass}>
           {snapshot.message} Son bilinen sayı gösteriliyor.
         </p>
       )}
 
       {snapshot?.status === "ok" && !picking && (
-        <TodoView snapshot={snapshot} onChangePage={() => setPicking(true)} onSelectPage={selectPage} />
+        <TodoView
+          snapshot={snapshot}
+          refreshing={refreshing}
+          onRefresh={() => load(true)}
+          onChangePage={() => setPicking(true)}
+          onSelectPage={selectPage}
+          onDisconnect={disconnect}
+        />
       )}
     </div>
   );
@@ -211,7 +227,7 @@ function DisconnectButton({ onConfirm }: { onConfirm: () => void }) {
 
   if (confirming) {
     return (
-      <span className="inline-flex items-center gap-1.5">
+      <span className="inline-flex items-center gap-2">
         <button type="button" onClick={onConfirm} className={`${buttonClass} !text-coral`}>
           Kes
         </button>
@@ -232,7 +248,7 @@ function LoadingState() {
   return (
     <div className="grid gap-3 py-2" aria-busy="true" aria-label="Notion yükleniyor">
       {[0, 1, 2].map((i) => (
-        <div key={i} className="h-10 animate-pulse rounded-xl bg-fg/10" style={{ animationDelay: `${i * 80}ms` }} />
+        <div key={i} className="clay-pressed h-11 animate-pulse rounded-2xl" style={{ animationDelay: `${i * 80}ms` }} />
       ))}
     </div>
   );
@@ -240,27 +256,37 @@ function LoadingState() {
 
 function ConnectState() {
   return (
-    <div className="grid justify-items-center gap-4 py-6 text-center">
-      <span className="grid size-14 place-items-center rounded-2xl bg-accent-soft text-accent">
-        <ChecklistIcon className="size-7" />
+    <div className="grid justify-items-center gap-5 py-4 text-center">
+      <span className="clay-button grid size-16 place-items-center rounded-[22px]">
+        <ChecklistIcon className="size-8" />
       </span>
       <div>
-        <h3 className="text-[17px] font-semibold tracking-tight">Notion sayfanı bağla</h3>
-        <p className="mx-auto mt-2 max-w-[340px] text-[13px] leading-relaxed text-muted">
-          Yapılacaklar sayfanı seç; tiklenenler ve tiklenmeyenler burada ayrı listelensin, bugün
-          tiklediklerin <strong className="font-semibold text-fg">Yapılan Görev</strong> sayacına işlensin.
+        <h2 className="text-[22px] font-semibold">Notion sayfanı bağla</h2>
+        <p className="mx-auto mt-2 max-w-[400px] text-[14px] font-semibold leading-relaxed text-muted">
+          Yapılacaklar sayfanı seç; tiklenenler ve tiklenmeyenler burada ayrı listelensin, bugün tiklediklerin{" "}
+          <strong className="font-bold text-fg">Yapılan görev</strong> sayacına işlensin.
         </p>
       </div>
       <a href="/api/notion/connect" className={primaryClass}>
         <LinkIcon className="size-4" />
-        Notion ile Bağlan
+        Notion ile bağlan
       </a>
-      <p className="text-[11px] text-faint">Yalnızca okuma izni istenir; Notion&apos;a hiçbir şey yazılmaz.</p>
+      <p className="text-[12px] font-semibold text-faint">
+        Yalnızca okuma izni istenir; Notion&apos;a hiçbir şey yazılmaz.
+      </p>
     </div>
   );
 }
 
-function PagePicker({ onDone, onCancel }: { onDone: () => void; onCancel?: () => void }) {
+function PagePicker({
+  onDone,
+  onCancel,
+  onDisconnect,
+}: {
+  onDone: () => void;
+  onCancel?: () => void;
+  onDisconnect: () => void;
+}) {
   const [pages, setPages] = useState<PageSummary[] | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -310,22 +336,24 @@ function PagePicker({ onDone, onCancel }: { onDone: () => void; onCancel?: () =>
   }
 
   return (
-    <section aria-label="Sayfa seç" className="grid gap-3">
+    <div className="grid gap-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-[15px] font-semibold tracking-tight">Hangi sayfayı kullanalım?</h3>
-          <p className="mt-1 text-[12px] leading-relaxed text-muted">
+          <h2 className="text-[20px] font-semibold">Hangi sayfayı kullanalım?</h2>
+          <p className="mt-1 text-[13px] font-semibold leading-relaxed text-muted">
             İçindeki yapılacaklar (onay kutuları) listelenir. Listede yoksa Notion&apos;da sayfayı bu uygulamayla paylaş.
           </p>
         </div>
-        {onCancel && (
+        {onCancel ? (
           <button type="button" onClick={onCancel} className={buttonClass}>
             Vazgeç
           </button>
+        ) : (
+          <DisconnectButton onConfirm={onDisconnect} />
         )}
       </div>
 
-      <label className="glass-inset flex items-center gap-2 rounded-xl px-3 py-2 text-[13px] focus-within:ring-2 focus-within:ring-[var(--ring)]">
+      <label className="clay-pressed flex items-center gap-2.5 rounded-2xl px-4 py-3 text-[14px] font-semibold focus-within:ring-2 focus-within:ring-[var(--ring)]">
         <SearchIcon className="size-4 text-faint" />
         <input
           type="search"
@@ -338,7 +366,7 @@ function PagePicker({ onDone, onCancel }: { onDone: () => void; onCancel?: () =>
       </label>
 
       {error && (
-        <p role="alert" className="rounded-xl border border-coral/25 bg-coral/10 px-3 py-2 text-center text-[12px] text-coral">
+        <p role="alert" className={alertClass}>
           {error}
         </p>
       )}
@@ -346,9 +374,9 @@ function PagePicker({ onDone, onCancel }: { onDone: () => void; onCancel?: () =>
       {!pages && !error && <LoadingState />}
 
       {pages && (
-        <ul className="grid max-h-[320px] gap-1.5 overflow-y-auto pr-1">
+        <ul className="grid max-h-[360px] gap-2 overflow-y-auto p-1">
           {filtered.length === 0 && (
-            <li className="py-6 text-center text-[12px] text-faint">
+            <li className="py-6 text-center text-[13px] font-semibold text-faint">
               {pages.length === 0 ? "Paylaşılmış sayfa yok." : "Eşleşen sayfa yok."}
             </li>
           )}
@@ -359,13 +387,15 @@ function PagePicker({ onDone, onCancel }: { onDone: () => void; onCancel?: () =>
                 onClick={() => choose(page.id)}
                 disabled={saving !== null}
                 aria-current={selected === page.id ? "true" : undefined}
-                className="glass-inset flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:opacity-60"
+                className={`flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-left transition-colors disabled:opacity-60 ${
+                  selected === page.id ? "clay-pressed" : "clay-sm hover:text-accent"
+                }`}
               >
-                <span className="grid size-7 shrink-0 place-items-center text-[16px]" aria-hidden="true">
+                <span className="grid size-8 shrink-0 place-items-center text-[19px]" aria-hidden="true">
                   {page.icon ?? "📄"}
                 </span>
-                <span className="min-w-0 flex-1 truncate text-[13px] font-medium">{page.title}</span>
-                <span className="shrink-0 text-[11px] text-faint">
+                <span className="min-w-0 flex-1 truncate text-[14px] font-bold">{page.title}</span>
+                <span className="shrink-0 text-[12px] font-semibold text-faint">
                   {saving === page.id ? "Seçiliyor…" : selected === page.id ? "Seçili" : formatEdited(page.editedAt)}
                 </span>
               </button>
@@ -373,7 +403,7 @@ function PagePicker({ onDone, onCancel }: { onDone: () => void; onCancel?: () =>
           ))}
         </ul>
       )}
-    </section>
+    </div>
   );
 }
 
@@ -393,68 +423,114 @@ function formatClock(iso: string) {
   }).format(new Date(iso));
 }
 
+/** Done share of all to-dos as a ring with the percentage in the middle. */
+function ProgressRing({ done, total }: { done: number; total: number }) {
+  const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+  const C = 2 * Math.PI * 42;
+  return (
+    <div className="relative size-[88px] shrink-0" role="img" aria-label={`Tamamlanan: yüzde ${pct}`}>
+      <svg viewBox="0 0 100 100" className="size-full -rotate-90" aria-hidden="true">
+        <circle cx="50" cy="50" r="42" fill="none" stroke="var(--chart-track)" strokeWidth="10" />
+        <circle
+          cx="50"
+          cy="50"
+          r="42"
+          fill="none"
+          stroke="var(--accent)"
+          strokeWidth="10"
+          strokeLinecap="round"
+          strokeDasharray={`${(pct / 100) * C} ${C}`}
+          style={{ transition: "stroke-dasharray 600ms ease" }}
+        />
+      </svg>
+      <span className="tabular absolute inset-0 grid place-items-center text-[20px] font-semibold">%{pct}</span>
+    </div>
+  );
+}
+
 function TodoView({
   snapshot,
+  refreshing,
+  onRefresh,
   onChangePage,
   onSelectPage,
+  onDisconnect,
 }: {
   snapshot: Extract<Snapshot, { status: "ok" }>;
+  refreshing: boolean;
+  onRefresh: () => void;
   onChangePage: () => void;
   onSelectPage: (id: string) => Promise<boolean>;
+  onDisconnect: () => void;
 }) {
   const reduce = useReducedMotion();
   const total = snapshot.todo.length + snapshot.done.length;
 
   return (
-    <div className="grid gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="truncate text-[15px] font-semibold tracking-tight">{snapshot.pageTitle}</h3>
-          <button
-            type="button"
-            onClick={onChangePage}
-            className="text-[11px] text-accent underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-          >
-            Sayfayı değiştir
-          </button>
-          <p className="mt-1 flex items-center gap-1.5 text-[11px] text-faint" role="status">
+    <div className="flex flex-col gap-4 xl:min-h-0 xl:flex-1">
+      {/* page header */}
+      <section className="clay flex flex-wrap items-center gap-x-6 gap-y-4 p-5 sm:p-6" aria-label="Sayfa özeti">
+        <span className="clay-button grid size-14 shrink-0 place-items-center rounded-[20px]" aria-hidden="true">
+          <ChecklistIcon className="size-7" />
+        </span>
+
+        <div className="min-w-0 flex-1 basis-[240px]">
+          <h1 className="truncate font-display text-[24px] font-semibold leading-tight">{snapshot.pageTitle}</h1>
+          <p className="mt-1 flex items-center gap-2 text-[13px] font-semibold text-faint" role="status">
             <span
               aria-hidden="true"
-              className={`size-1.5 rounded-full ${snapshot.stale ? "bg-coral" : "bg-teal"} ${
+              className={`size-2 rounded-full ${snapshot.stale ? "bg-coral" : "bg-teal"} ${
                 snapshot.stale || reduce ? "" : "animate-pulse"
               }`}
             />
             {snapshot.stale ? "Bağlantı sorunu · son güncelleme" : "Canlı · güncellendi"}{" "}
-            <time dateTime={snapshot.fetchedAt} className="font-mono">
+            <time dateTime={snapshot.fetchedAt} className="tabular">
               {formatClock(snapshot.fetchedAt)}
             </time>
           </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button type="button" onClick={onRefresh} disabled={refreshing} className={buttonClass}>
+              <RefreshIcon className={`size-4 ${refreshing ? "animate-spin" : ""}`} />
+              Yenile
+            </button>
+            <button type="button" onClick={onChangePage} className={buttonClass}>
+              Sayfayı değiştir
+            </button>
+            <DisconnectButton onConfirm={onDisconnect} />
+          </div>
         </div>
-        <div className="glass-inset inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12px] text-muted">
-          Bugün tiklenen
-          <NumberFlow
-            value={snapshot.todayDone}
-            animated={!reduce}
-            className="font-mono text-[15px] font-semibold text-accent"
-          />
+
+        <div className="flex items-center gap-4">
+          <div className="clay-pressed rounded-[22px] px-5 py-3 text-center">
+            <NumberFlow
+              value={snapshot.todayDone}
+              animated={!reduce}
+              className="tabular text-[34px] font-semibold leading-none text-accent"
+            />
+            <p className="mt-1 text-[12px] font-bold text-muted">bugün tiklenen</p>
+          </div>
+          <ProgressRing done={snapshot.done.length} total={total} />
         </div>
-      </div>
+      </section>
 
       {total === 0 && snapshot.childPages.length > 0 ? (
         <ChildPagesHint snapshot={snapshot} onSelectPage={onSelectPage} />
       ) : total === 0 ? (
-        <p className="py-6 text-center text-[13px] text-muted">
-          Bu sayfada henüz yapılacak (onay kutusu) yok.
-        </p>
+        <section className="clay grid place-items-center gap-2 p-10 text-center">
+          <span className="text-[40px]" aria-hidden="true">
+            📭
+          </span>
+          <p className="text-[14px] font-semibold text-muted">Bu sayfada henüz yapılacak (onay kutusu) yok.</p>
+        </section>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          <TodoList title="Yapılacaklar" items={snapshot.todo} empty="Hepsi tamam 🎉" />
-          <TodoList title="Yapılanlar" items={snapshot.done} empty="Henüz tiklenen yok" done />
+        <div className="grid gap-4 md:grid-cols-2 xl:min-h-0 xl:flex-1">
+          <TodoList title="Yapılacaklar" emoji="⏳" items={snapshot.todo} empty="Hepsi tamam 🎉" />
+          <TodoList title="Yapılanlar" emoji="✅" items={snapshot.done} empty="Henüz tiklenen yok" done />
         </div>
       )}
 
       {snapshot.partial && (
-        <p className="text-center text-[11px] text-faint">
+        <p className="text-center text-[12px] font-semibold text-faint">
           Sayfa çok büyük olduğu için bazı iç içe maddeler gösterilmedi.
         </p>
       )}
@@ -484,37 +560,39 @@ function ChildPagesHint({
   }
 
   return (
-    <section aria-label="Alt sayfalar" className="glass-inset grid gap-3 rounded-2xl p-4">
+    <section aria-label="Alt sayfalar" className="clay grid gap-4 p-5 sm:p-6 xl:min-h-0 xl:flex-1">
       <div>
-        <h4 className="text-[14px] font-semibold tracking-tight">
+        <h2 className="text-[18px] font-semibold">
           &ldquo;{snapshot.pageTitle}&rdquo; sayfasında yapılacak yok
-        </h4>
-        <p className="mt-1 text-[12px] leading-relaxed text-muted">
-          Bu sayfanın kendisinde onay kutusu bulunmuyor, ama içinde alt sayfalar var. Yapılacaklarının olduğu
-          sayfayı seç. Sayaç, seçtiğin sayfadaki bugün tiklenenlerden hesaplanır.
+        </h2>
+        <p className="mt-1 max-w-[60ch] text-[13px] font-semibold leading-relaxed text-muted">
+          Bu sayfanın kendisinde onay kutusu bulunmuyor, ama içinde alt sayfalar var. Yapılacaklarının olduğu sayfayı
+          seç. Sayaç, seçtiğin sayfadaki bugün tiklenenlerden hesaplanır.
         </p>
       </div>
 
       {failed && (
-        <p role="alert" className="rounded-xl border border-coral/25 bg-coral/10 px-3 py-2 text-center text-[12px] text-coral">
+        <p role="alert" className={alertClass}>
           Sayfa seçilemedi. Lütfen tekrar dene.
         </p>
       )}
 
-      <ul className="grid max-h-[300px] gap-1.5 overflow-y-auto pr-1">
+      <ul className="grid gap-2 overflow-y-auto p-1 md:grid-cols-2 xl:min-h-0">
         {snapshot.childPages.map((page) => (
           <li key={page.id}>
             <button
               type="button"
               onClick={() => choose(page.id)}
               disabled={busy !== null}
-              className="glass-inset flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:opacity-60"
+              className="clay-sm flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-left transition-colors hover:text-accent disabled:opacity-60"
             >
-              <span aria-hidden="true" className="text-[15px]">
+              <span aria-hidden="true" className="text-[18px]">
                 📄
               </span>
-              <span className="min-w-0 flex-1 truncate text-[13px] font-medium">{page.title}</span>
-              <span className="shrink-0 text-[11px] text-accent">{busy === page.id ? "Seçiliyor…" : "Bunu kullan"}</span>
+              <span className="min-w-0 flex-1 truncate text-[14px] font-bold">{page.title}</span>
+              <span className="shrink-0 text-[12px] font-bold text-accent">
+                {busy === page.id ? "Seçiliyor…" : "Bunu kullan"}
+              </span>
             </button>
           </li>
         ))}
@@ -523,41 +601,67 @@ function ChildPagesHint({
   );
 }
 
-function TodoList({ title, items, empty, done = false }: { title: string; items: TodoItem[]; empty: string; done?: boolean }) {
+function TodoList({
+  title,
+  emoji,
+  items,
+  empty,
+  done = false,
+}: {
+  title: string;
+  emoji: string;
+  items: TodoItem[];
+  empty: string;
+  done?: boolean;
+}) {
   return (
-    <section aria-label={title} className="glass-inset rounded-2xl p-3">
-      <h4 className="mb-2 flex items-center justify-between px-1 text-[11px] font-medium uppercase tracking-[0.14em] text-faint">
-        {title}
-        <span className="font-mono text-[12px] normal-case tracking-normal text-muted">{items.length}</span>
-      </h4>
+    <section aria-label={title} className="clay flex max-h-[520px] min-h-[220px] flex-col p-4 sm:p-5 xl:max-h-none xl:min-h-0">
+      <div className="flex shrink-0 items-center gap-2.5">
+        <span className="clay-sm grid size-10 place-items-center rounded-2xl text-[19px]" aria-hidden="true">
+          {emoji}
+        </span>
+        <h2 className="flex-1 text-[18px] font-semibold">{title}</h2>
+        <span className="clay-pressed tabular rounded-full px-3.5 py-1 text-[14px] font-semibold">{items.length}</span>
+      </div>
+
       {items.length === 0 ? (
-        <p className="px-1 py-4 text-center text-[12px] text-faint">{empty}</p>
+        <p className="clay-pressed mt-4 grid flex-1 place-items-center rounded-[20px] px-4 py-8 text-center text-[14px] font-bold text-muted">
+          {empty}
+        </p>
       ) : (
-        <ul className="grid max-h-[340px] gap-0.5 overflow-y-auto pr-1">
+        <ul className="mt-3 grid min-h-0 flex-1 content-start gap-1.5 overflow-y-auto pr-1">
           {items.map((item) => (
             <li
               key={item.id}
-              className="flex items-start gap-2.5 rounded-lg px-1.5 py-1.5 text-[13px] leading-snug"
-              style={{ paddingLeft: `${0.375 + item.depth * 1.1}rem` }}
+              className="flex items-start gap-3 rounded-2xl px-3 py-2.5 text-[14px] font-semibold leading-snug transition-colors hover:bg-sunk"
+              style={{ marginLeft: `${Math.min(item.depth, 4) * 1.1}rem` }}
             >
               <span
                 aria-hidden="true"
-                className={`mt-[3px] grid size-4 shrink-0 place-items-center rounded-[5px] border ${
-                  done ? "border-accent bg-accent text-white" : "border-line-strong"
+                className={`mt-px grid size-[22px] shrink-0 place-items-center rounded-full ${
+                  done ? "clay-button" : "clay-pressed"
                 }`}
               >
                 {done && (
-                  <svg viewBox="0 0 16 16" className="size-3" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    viewBox="0 0 16 16"
+                    className="size-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="m3.5 8.5 3 3 6-6.5" />
                   </svg>
                 )}
               </span>
-              <span className={done ? "text-muted line-through decoration-faint/60" : "text-fg"}>
+              <span className={`min-w-0 flex-1 ${done ? "text-muted line-through decoration-faint/60" : "text-fg"}`}>
                 {item.text}
                 <span className="sr-only">{done ? " (yapıldı)" : " (yapılmadı)"}</span>
               </span>
               {item.doneToday && (
-                <span className="ml-auto shrink-0 rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-medium text-accent">
+                <span className="shrink-0 rounded-full bg-accent-soft px-2.5 py-0.5 text-[12px] font-bold text-accent">
                   bugün
                 </span>
               )}

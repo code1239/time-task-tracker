@@ -1,39 +1,33 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Geist_Mono, Dancing_Script } from "next/font/google";
+import { Fredoka, Nunito } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider, themeInitScript } from "@/components/theme-provider";
 import { MotionConfig } from "motion/react";
 
-const inter = Inter({
-  variable: "--font-inter",
+// Rounded, toy-like display face for headings and numbers.
+const display = Fredoka({
+  variable: "--font-display-face",
   subsets: ["latin", "latin-ext"],
   display: "swap",
 });
 
-// Graceful handwriting for the Michael Jordan quote.
-const handwriting = Dancing_Script({
-  variable: "--font-quote",
+const body = Nunito({
+  variable: "--font-body",
   subsets: ["latin", "latin-ext"],
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Zaman — Türkiye Saati & Görev Takibi",
+  title: "Zaman — Odak ve Görev Takibi",
   description:
-    "Türkiye saati, günlük görev sayacı ve geri sayım. Sakin, odaklı ve zarif bir çalışma alanı.",
+    "Konu konu odak zamanlayıcı, günlük görev sayacı, geri sayım ve Notion yapılacakları. Günün nereye gittiğini renkli grafiklerle gör.",
   applicationName: "Zaman",
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#faf6f5" },
-    { media: "(prefers-color-scheme: dark)", color: "#251619" },
+    { media: "(prefers-color-scheme: light)", color: "#eaf2ff" },
+    { media: "(prefers-color-scheme: dark)", color: "#111a2c" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -45,16 +39,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="tr"
       suppressHydrationWarning
       data-scroll-behavior="smooth"
-      className={`${inter.variable} ${geistMono.variable} ${handwriting.variable}`}
+      className={`${display.variable} ${body.variable}`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-dvh font-sans">
         <MotionConfig reducedMotion="user">
-          <ThemeProvider>
-            {children}
-          </ThemeProvider>
+          <ThemeProvider>{children}</ThemeProvider>
+          <span
+            aria-hidden="true"
+            className="pointer-events-none fixed bottom-1 right-3 z-10 select-none font-display text-[11px] font-semibold text-faint/80"
+          >
+            v2
+          </span>
         </MotionConfig>
       </body>
     </html>

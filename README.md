@@ -1,18 +1,18 @@
 # Time & Task Tracker
 
-A focused, glassmorphic Turkish time/task/countdown web app built with Next.js 16 (App Router), TypeScript, Tailwind CSS, SQL Server, and Docker. It shows Turkey time, counts the tasks you finish each day, runs a countdown with an alarm, and can pull your to-dos from Notion (OAuth).
+A playful, clay-styled Turkish focus tracker built with Next.js 16 (App Router), TypeScript, Tailwind CSS, SQL Server, and Docker. Time your focus sessions per topic and see where the day went (share-of-time charts), count the tasks you finish, set a countdown on any focus session, and pull your to-dos from Notion (OAuth). Turkey time is a widget on the dashboard.
 
 > Portfolio project. It needs a SQL Server instance, so there is no hosted demo; run it locally or with Docker (see below). The UI is in Turkish.
 
 ## Screenshots
 
-| Turkey time | Notion tab |
+| Dashboard | Focus |
 | --- | --- |
-| ![Turkey time with digital and analog clock](docs/screenshots/clock.jpg) | ![Notion tab with to-dos split into to do and done](docs/screenshots/notion.jpg) |
+| ![Dashboard with clock, stat tiles and time-share charts](docs/screenshots/dashboard.jpg) | ![Focus timer with topic chips, today's sessions and the task counter](docs/screenshots/focus.jpg) |
 
-| Countdown | Mobile |
+| Notion | Mobile |
 | --- | --- |
-| ![Countdown setup](docs/screenshots/countdown.jpg) | <img src="docs/screenshots/mobile.jpg" alt="Notion tab on a phone" width="240"> |
+| ![Notion page with to do and done cards and a completion ring](docs/screenshots/notion.jpg) | <img src="docs/screenshots/mobile.jpg" alt="Dashboard on a phone with the bottom tab bar" width="240"> |
 
 ## Engineering Highlights
 
@@ -21,18 +21,19 @@ A focused, glassmorphic Turkish time/task/countdown web app built with Next.js 1
 - **Notion OAuth without leaking tokens** — per-user tokens are encrypted with AES-256-GCM in the database, the flow is protected by a CSRF `state` cookie, and the browser never sees a token. The app only ever reads.
 - **Near-live sync without webhooks** — adaptive polling (5 s, backing off to 20 s, paused while the tab is hidden) with a short server cache, single-flight requests and stale-data fallback. Notion webhooks are delayed and need a public URL, so polling fits better.
 - **Defensive API layer** — `zod` validation, one `requireSession()` helper, parameterized SQL only, a rate-limited login, and a cached connection pool shared across requests.
-- **Accessible, motion-aware UI** — keyboard-navigable tabs wired with ARIA, live regions for status changes, and animations that follow `prefers-reduced-motion`.
+- **Focus sessions with honest percentages** — one running session per user (a filtered unique index enforces it), sessions that cross Istanbul midnight are split between the two days, and shares are rounded with the largest-remainder method so they always add up to 100%.
+- **Charts built for reading** — topic colours come from a fixed eight-slot categorical palette that was checked for colour-blind separation against both themes; a topic keeps its colour for life, every chart has a legend and a table view, and the 24-hour day ring is a custom SVG.
+- **Accessible, motion-aware UI** — keyboard-navigable navigation with ARIA, live regions for status changes, and animations that follow `prefers-reduced-motion`.
 - **Pure, easily testable core** — the tricky logic (duration parsing, to-do flattening with Istanbul day boundaries, token encryption) lives in small functions with no React or DOM dependencies. There is no automated test suite yet; `npm run lint` and `npm run build` are the checks.
 
 ## Features
 
-- **Turkey Time** — live digital (animated digits) and analog clock, Turkish date formatting. Always `Europe/Istanbul` (UTC+3), independent of the device timezone. A fullscreen mode is available from the clock tab (with a CSS fallback where the Fullscreen API is unavailable).
-- **Daily Tasks** — optimistic atomic counter with Istanbul-midnight rollover, 7/30-day animated history chart, and confetti on milestone hits (multiples of 5). When a Notion page is connected, the counter follows it (see Notion Integration).
-- **Countdown** — set a duration like `1h 30m`, `90m`, or `90`. Animated hours/minutes/seconds countdown (up to 24h). When it expires, a Web Audio bell rings until you tap **Stop alarm**. The alarm works across tabs; if the page was closed when it expired, it appears silently as "Time's up".
-- **Theme** — light/dark/system with per-user `Users.ThemePreference` persisted in SQL Server and `localStorage`. No flash on load; login page follows the theme.
-- **Notion** — connect your own Notion account, pick a page and see its to-dos split into to do / done. Today's ticks drive the daily counter, with near-live updates.
-- **Chicago Bulls look** — soft cocoa-rose dark theme and a red light theme, two Michael Jordan portraits facing each other, a Bulls logo that snorts smoke, and a handwritten Jordan quote that "writes itself" at the bottom. The images are user-supplied files in `public/decor/` (`jordan.png`, `bulls-logo.png`); a missing file simply renders nothing.
-- **Polished UI** — aurora/glass aesthetic, reduced-motion support, animations paused when tab is hidden, keyboard-accessible tabs with visible focus.
+- **Focus timer** — pick a topic (💻 Coding, 📚 Reading, …), press start, press stop. Tick **Süre belirle** to count down from a length you choose (20 min, `1h 30m`, …) instead of counting up. When the time is up the session is saved to the database at exactly that length (even if the browser is closed), a bell rings, and you are asked whether the task was completed, which also bumps today's task counter. Forgot to start the timer? Add minutes by hand. Topics can be renamed, re-emoji'd and archived (history keeps its colours).
+- **Dashboard** — greeting, Turkey-time clock widget (digital + analog with a ticking second hand, fullscreen mode with a CSS fallback), stat tiles (focus today, tasks, streak, top topic), the 24-hour day ring, a "where did today go?" donut, weekly topic leaderboard, stacked 7/30-day bars and the task history. On a desktop screen the dashboard and the focus page fit without scrolling, and every chart has an expand button in its top-right corner that opens it full screen.
+- **Daily Tasks** — optimistic atomic counter with Istanbul-midnight rollover and confetti on milestone hits (multiples of 5). When a Notion page is connected, the counter follows it (see Notion Integration).
+- **Theme** — a sky-blue light theme and a navy dark theme (light/dark/system), saved per user in `Users.ThemePreference` and `localStorage`. No flash on load; the login page follows the theme.
+- **Notion** — connect your own Notion account, pick a page and see its to-dos split into to do / done cards, with a completion ring and today's tick count. Today's ticks drive the daily counter, with near-live updates.
+- **Clay UI** — puffy, toy-like surfaces (Fredoka + Nunito), a left sidebar on desktop and a bottom tab bar on phones (three sections: Panel, Odak, Notion), reduced-motion support and visible keyboard focus.
 - **Auth & Security** — login only (no registration), httpOnly SameSite=Lax JWT cookie, bcrypt hashes, rate-limited login, parameterized queries, least-privilege DB user (`db_datareader`/`db_datawriter`).
 
 ## Tech Stack
@@ -131,7 +132,7 @@ Tokens are encrypted (AES-256-GCM) in the database and never sent to the browser
 
 - Daily task key is `(UserId, CountDate)` with `CountDate` calculated in **Europe/Istanbul**.
 - At 00:00 Istanbul the client detects the new day and reloads the count; the server computes the date per request so rollover works even if the tab was closed.
-- Countdown duration is entered as `1h 30m`, `1h30m`, `90m`, or `90` (minutes). It is stored as UTC in `DATETIME2`. On expiry the Web Audio bell repeats until dismissed. The alarm is app-wide; if the tab was in the background or the page was closed at expiry, it appears silently as "Time's up" with a **Play alarm** option. Browser autoplay rules require user interaction before audio can play.
+- A countdown focus session takes its length as `1h 30m`, `1h30m`, `90m`, or `90` (minutes, 1 minute to 24 hours) and stores it in `FocusSessions.PlannedMinutes`. The server closes the session at `StartedAt + PlannedMinutes` the next time sessions are read, so the saved time is exact even if no browser was open. The bell is app-wide; a page opened after the time ran out stays silent.
 - All DB writes use parameterized queries. `COUNT >= 0` is enforced at the DB level.
 
 ## Scripts
@@ -162,4 +163,4 @@ Tokens are encrypted (AES-256-GCM) in the database and never sent to the browser
 
 ## License
 
-Released under the [MIT License](LICENSE). The Michael Jordan portrait and Chicago Bulls logo in `public/decor/` are not covered by it: they belong to their respective owners and are included only as decoration for this personal project.
+Released under the [MIT License](LICENSE).

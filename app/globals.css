@@ -2,73 +2,120 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Clay theme: puffy, toy-like surfaces. Every card is a soft "clay" lump lit
+ * from the top-left: a light outer shadow up-left, a warm one down-right, a
+ * glossy inner top edge and a faint inner bottom shade.
+ */
+/* Blue clay: cool sky-tinted surfaces, a clear blue accent. */
 :root {
-  /* Chicago Bulls palette: red #ce1141 softened for long viewing, warm neutrals. */
-  --bg: #faf6f5;
-  --bg-deep: #f3e7e6;
-  --fg: #1c1213;
-  --muted: #6e5f61;
-  --faint: #9a8b8d;
-  --accent: #c4122f;
-  --accent-strong: #a30f27;
-  --accent-soft: rgba(196, 18, 47, 0.1);
-  --teal: #d9822b;
-  --coral: #e0643c;
-  --glass: rgba(255, 255, 255, 0.58);
-  --glass-strong: rgba(255, 255, 255, 0.8);
-  --glass-inset: rgba(255, 255, 255, 0.5);
-  --line: rgba(60, 24, 28, 0.1);
-  --line-strong: rgba(60, 24, 28, 0.17);
-  --shadow-card: 0 40px 90px -40px rgba(120, 20, 35, 0.4), 0 10px 30px -18px rgba(120, 20, 35, 0.18);
-  --shadow-soft: 0 18px 40px -24px rgba(120, 20, 35, 0.35);
-  --glow: rgba(196, 18, 47, 0.22);
-  --ring: rgba(196, 18, 47, 0.5);
-  --noise-opacity: 0.5;
-  --chart-track: rgba(60, 24, 28, 0.06);
+  --bg: #eaf2ff;
+  --bg-deep: #d9e8fb;
+  --card: #f8fbff;
+  --card-sunk: #e4edfa;
+  --fg: #14243f;
+  --muted: #4f627f;
+  --faint: #71839f;
+  --accent: #2f6fed;
+  --accent-strong: #1f55c9;
+  --accent-soft: rgba(47, 111, 237, 0.13);
+  --on-accent: #ffffff;
+  --peach: #bfe0ff;
+  --mint: #8edcc0;
+  --lilac: #c9dcff;
+  --butter: #ffe08a;
+  --teal: #12805f;
+  --coral: #d03a28;
+  --glass: var(--card);
+  --glass-strong: var(--card);
+  --glass-inset: var(--card-sunk);
+  --line: rgba(30, 60, 110, 0.1);
+  --line-strong: rgba(30, 60, 110, 0.18);
+  --clay-light: rgba(255, 255, 255, 0.95);
+  --clay-dark: rgba(60, 100, 170, 0.22);
+  --clay-gloss: rgba(255, 255, 255, 0.9);
+  --clay-shade: rgba(60, 100, 170, 0.1);
+  --shadow-soft: 0 14px 30px -18px rgba(40, 80, 150, 0.45);
+  --glow: rgba(47, 111, 237, 0.3);
+  --ring: rgba(47, 111, 237, 0.55);
+  --chart-track: rgba(30, 60, 110, 0.07);
+
+  /* topic colours: validated categorical palette, fixed slot order */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+  --series-7: #6250d6;
+  --series-8: #e34948;
   color-scheme: light;
 }
 
 .dark {
-  /* Soft cocoa-rose dark theme: warm, lighter surfaces instead of near-black. */
-  --bg: #251619;
-  --bg-deep: #331d22;
-  --fg: #fdf1f2;
-  --muted: #d6bcc1;
-  --faint: #ad9398;
-  --accent: #ff7d8f;
-  --accent-strong: #f4607a;
-  --accent-soft: rgba(255, 125, 143, 0.17);
-  --teal: #ffb878;
-  --coral: #ffa585;
-  --glass: rgba(74, 44, 51, 0.6);
-  --glass-strong: rgba(84, 52, 60, 0.84);
-  --glass-inset: rgba(255, 255, 255, 0.065);
-  --line: rgba(255, 235, 238, 0.13);
-  --line-strong: rgba(255, 235, 238, 0.22);
-  --shadow-card: 0 40px 100px -40px rgba(20, 6, 10, 0.7), 0 12px 36px -20px rgba(20, 6, 10, 0.5);
-  --shadow-soft: 0 18px 44px -24px rgba(20, 6, 10, 0.6);
-  --glow: rgba(255, 125, 143, 0.34);
-  --ring: rgba(255, 125, 143, 0.6);
-  --noise-opacity: 0.3;
-  --chart-track: rgba(255, 235, 238, 0.08);
+  --bg: #111a2c;
+  --bg-deep: #0c1422;
+  --card: #1c2a44;
+  --card-sunk: #162239;
+  --fg: #eaf2ff;
+  --muted: #bccbe6;
+  --faint: #92a5c7;
+  --accent: #7fb0ff;
+  --accent-strong: #a6c7ff;
+  --accent-soft: rgba(127, 176, 255, 0.17);
+  --on-accent: #0b1a33;
+  --peach: #2c5a96;
+  --mint: #6fd0ad;
+  --lilac: #3b5fa8;
+  --butter: #f2c75c;
+  --teal: #74dcb5;
+  --coral: #ff9a86;
+  --line: rgba(200, 220, 255, 0.11);
+  --line-strong: rgba(200, 220, 255, 0.2);
+  --clay-light: rgba(170, 205, 255, 0.06);
+  --clay-dark: rgba(2, 6, 16, 0.55);
+  --clay-gloss: rgba(190, 215, 255, 0.1);
+  --clay-shade: rgba(0, 0, 0, 0.22);
+  --shadow-soft: 0 16px 34px -18px rgba(0, 0, 0, 0.7);
+  --glow: rgba(127, 176, 255, 0.32);
+  --ring: rgba(127, 176, 255, 0.65);
+  --chart-track: rgba(200, 220, 255, 0.08);
+
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #0ca30c;
+  --series-7: #9085e9;
+  --series-8: #e66767;
   color-scheme: dark;
 }
 
 @theme inline {
   --color-bg: var(--bg);
   --color-bg-deep: var(--bg-deep);
+  --color-card: var(--card);
+  --color-sunk: var(--card-sunk);
   --color-fg: var(--fg);
   --color-muted: var(--muted);
   --color-faint: var(--faint);
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-strong);
+  --color-on-accent: var(--on-accent);
+  --color-peach: var(--peach);
+  --color-mint: var(--mint);
+  --color-lilac: var(--lilac);
+  --color-butter: var(--butter);
   --color-teal: var(--teal);
   --color-coral: var(--coral);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
-  --color-surface: var(--glass-inset);
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
+  --color-surface: var(--card-sunk);
+  --font-sans: var(--font-body), ui-rounded, ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display-face), var(--font-body), ui-rounded, sans-serif;
+  /* the clay look has no monospace: numbers use the rounded display face */
+  --font-mono: var(--font-display-face), ui-rounded, sans-serif;
 }
 
 * {
@@ -81,7 +128,10 @@ html {
 
 body {
   background-color: var(--bg);
-  background-image: linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+  background-image:
+    radial-gradient(60rem 40rem at 0% 0%, color-mix(in oklab, var(--lilac) 28%, transparent), transparent 70%),
+    radial-gradient(50rem 36rem at 100% 100%, color-mix(in oklab, var(--peach) 22%, transparent), transparent 70%);
+  background-attachment: fixed;
   color: var(--fg);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -89,13 +139,26 @@ body {
   min-height: 100dvh;
 }
 
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+.tabular {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+
 ::selection {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 :where(a, button, input, textarea, select, [tabindex]):focus-visible {
-  outline: 2px solid var(--ring);
+  outline: 3px solid var(--ring);
   outline-offset: 3px;
 }
 
@@ -105,159 +168,110 @@ select {
   color-scheme: inherit;
 }
 
-/* ---------- aurora background ---------- */
+/* In the components layer so Tailwind utilities (rounded-full, ...) can override them. */
+@layer components {
+  /* ---------- clay surfaces ---------- */
 
-.aurora {
-  position: fixed;
-  inset: 0;
-  z-index: -10;
-  overflow: hidden;
-  background:
-    radial-gradient(120% 90% at 10% 0%, color-mix(in oklab, var(--accent) 9%, transparent), transparent 60%),
-    radial-gradient(100% 80% at 90% 10%, color-mix(in oklab, var(--teal) 8%, transparent), transparent 55%),
-    linear-gradient(160deg, var(--bg) 0%, var(--bg-deep) 100%);
-  contain: layout style paint;
-}
+  .clay {
+    background: var(--card);
+    border-radius: 28px;
+    box-shadow:
+      -8px -8px 20px var(--clay-light),
+      12px 16px 32px -6px var(--clay-dark),
+      inset 0 2px 1px var(--clay-gloss),
+      inset 0 -6px 14px var(--clay-shade);
+    contain: layout style paint;
+  }
 
-.aurora-blob {
-  position: absolute;
-  border-radius: 999px;
-  filter: blur(30px);
-  opacity: 0.48;
-  transform: translate3d(0, 0, 0);
-}
+  /* small raised lump: chips, pills, icon buttons */
+  .clay-sm {
+    background: var(--card);
+    box-shadow:
+      -3px -3px 8px var(--clay-light),
+      5px 7px 14px -4px var(--clay-dark),
+      inset 0 1.5px 0 var(--clay-gloss),
+      inset 0 -3px 6px var(--clay-shade);
+  }
 
-.dark .aurora-blob {
-  opacity: 0.42;
-  filter: blur(38px);
-}
+  /* pressed into the clay: inputs, tracks, the active state */
+  .clay-pressed {
+    background: var(--card-sunk);
+    box-shadow:
+      inset 4px 5px 10px var(--clay-shade),
+      inset -3px -3px 8px var(--clay-light);
+  }
 
-.aurora:not(.aurora-paused) .aurora-blob {
-  will-change: transform;
-}
+  /* the jelly-bean button: saturated, glossy, sinks when pressed */
+  .clay-button {
+    background: var(--accent);
+    color: var(--on-accent);
+    box-shadow:
+      0 10px 22px -8px var(--glow),
+      inset 0 3px 2px rgba(255, 255, 255, 0.38),
+      inset 0 -6px 10px rgba(10, 30, 90, 0.25);
+    transition: box-shadow 160ms ease, filter 160ms ease;
+  }
 
-.aurora-blob--one {
-  width: min(62vw, 820px);
-  aspect-ratio: 1;
-  left: -12vw;
-  top: -18vh;
-  background: radial-gradient(circle at 35% 35%, color-mix(in oklab, var(--accent) 70%, transparent), transparent 68%);
-  animation: aurora-one 26s ease-in-out infinite alternate;
-}
+  .clay-button:hover:not(:disabled) {
+    filter: brightness(1.06);
+  }
 
-.aurora-blob--two {
-  width: min(54vw, 700px);
-  aspect-ratio: 1;
-  right: -10vw;
-  top: 4vh;
-  background: radial-gradient(circle at 60% 40%, color-mix(in oklab, var(--teal) 62%, transparent), transparent 68%);
-  animation: aurora-two 32s ease-in-out infinite alternate;
-}
+  .clay-button:active:not(:disabled) {
+    box-shadow:
+      0 4px 10px -6px var(--glow),
+      inset 0 4px 10px rgba(10, 30, 90, 0.32);
+  }
 
-.aurora-blob--three {
-  width: min(58vw, 760px);
-  aspect-ratio: 1;
-  left: 12vw;
-  bottom: -30vh;
-  background: radial-gradient(circle at 50% 50%, color-mix(in oklab, var(--coral) 52%, transparent), transparent 66%);
-  animation: aurora-three 38s ease-in-out infinite alternate;
-}
+  .clay-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
 
-.aurora-blob--four {
-  width: min(40vw, 520px);
-  aspect-ratio: 1;
-  right: 6vw;
-  bottom: -16vh;
-  background: radial-gradient(circle at 50% 50%, color-mix(in oklab, var(--accent) 55%, transparent), transparent 68%);
-  animation: aurora-four 30s ease-in-out infinite alternate;
-}
+  /* Older class names map onto the clay system. */
+  .glass {
+    background: var(--card);
+    box-shadow:
+      -8px -8px 20px var(--clay-light),
+      12px 16px 32px -6px var(--clay-dark),
+      inset 0 2px 1px var(--clay-gloss),
+      inset 0 -6px 14px var(--clay-shade);
+  }
 
-.aurora-paused .aurora-blob {
-  animation-play-state: paused;
-}
+  .glass-pill {
+    background: var(--card);
+    box-shadow:
+      -3px -3px 8px var(--clay-light),
+      5px 7px 14px -4px var(--clay-dark),
+      inset 0 1.5px 0 var(--clay-gloss);
+  }
 
-.aurora-grain {
-  position: absolute;
-  inset: 0;
-  opacity: var(--noise-opacity);
-  mix-blend-mode: overlay;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.28'/%3E%3C/svg%3E");
-}
+  .glass-inset {
+    background: var(--card-sunk);
+    border: 1px solid transparent;
+    box-shadow:
+      inset 3px 4px 8px var(--clay-shade),
+      inset -2px -2px 6px var(--clay-light);
+  }
 
-.aurora-vignette {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(120% 90% at 50% 40%, transparent 40%, color-mix(in oklab, var(--bg) 55%, transparent) 100%);
-}
+  .accent-gradient {
+    background: var(--accent);
+    color: var(--on-accent);
+    box-shadow:
+      inset 0 3px 2px rgba(255, 255, 255, 0.35),
+      inset 0 -5px 9px rgba(10, 30, 90, 0.22);
+  }
 
-@keyframes aurora-one {
-  0% { transform: translate3d(-6%, -4%, 0) scale(1) rotate(0deg); }
-  50% { transform: translate3d(10%, 6%, 0) scale(1.12) rotate(12deg); }
-  100% { transform: translate3d(4%, 14%, 0) scale(0.96) rotate(-8deg); }
-}
+  .shadow-glow {
+    box-shadow: 0 12px 26px -10px var(--glow);
+  }
 
-@keyframes aurora-two {
-  0% { transform: translate3d(6%, -6%, 0) scale(1.05); }
-  50% { transform: translate3d(-12%, 10%, 0) scale(0.92); }
-  100% { transform: translate3d(-4%, 2%, 0) scale(1.14); }
-}
-
-@keyframes aurora-three {
-  0% { transform: translate3d(-8%, 8%, 0) scale(1); }
-  50% { transform: translate3d(14%, -6%, 0) scale(1.1); }
-  100% { transform: translate3d(2%, -14%, 0) scale(0.94); }
-}
-
-@keyframes aurora-four {
-  0% { transform: translate3d(4%, 4%, 0) scale(0.98); }
-  50% { transform: translate3d(-10%, -8%, 0) scale(1.16); }
-  100% { transform: translate3d(-2%, 8%, 0) scale(1.04); }
-}
-
-/* ---------- glass ---------- */
-
-.glass {
-  background: color-mix(in oklab, var(--glass-strong) 99%, transparent);
-  border: 1px solid var(--line);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  box-shadow: 0 20px 60px -30px rgba(120, 20, 35, 0.25);
-  contain: layout style paint;
-}
-
-.dark .glass {
-  box-shadow: 0 30px 80px -40px rgba(0, 0, 0, 0.8);
-}
-
-.glass-inset {
-  background: color-mix(in oklab, var(--glass-inset) 100%, transparent);
-  border: 1px solid var(--line);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
-.glass-pill {
-  background: color-mix(in oklab, var(--glass-strong) 99%, transparent);
-  border: 1px solid var(--line);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  box-shadow: 0 10px 40px -20px rgba(120, 20, 35, 0.3);
-}
-
-.text-gradient {
-  background: linear-gradient(100deg, var(--fg) 10%, color-mix(in oklab, var(--accent) 85%, var(--fg)) 65%, var(--teal) 110%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.accent-gradient {
-  background: linear-gradient(120deg, var(--accent) 0%, color-mix(in oklab, var(--accent) 60%, var(--teal)) 100%);
-}
-
-.shadow-glow {
-  box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 20%, transparent), 0 18px 50px -12px var(--glow);
+  /* topic swatch: style={{ "--slot": "var(--series-3)" }} */
+  .slot-swatch {
+    background: var(--slot);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -2px 3px rgba(0, 0, 0, 0.15);
+  }
 }
 
 /* ---------- clock ---------- */
@@ -311,9 +325,9 @@ select {
   background: var(--bg);
 }
 
-/* the glass card contains its children (layout + paint), which would trap the
+/* the clay card contains its children (layout + paint), which would trap the
    fixed fallback overlay; release it only while the fallback is active */
-.glass:has(.clock-stage[data-fallback]) {
+.clay:has(.clock-stage[data-fallback]) {
   contain: style;
   overflow: visible;
 }
@@ -411,22 +425,6 @@ select {
 
 /* ---------- micro animations ---------- */
 
-@keyframes pulse-ring {
-  0% { transform: scale(0.85); opacity: 0.55; }
-  70% { transform: scale(1.6); opacity: 0; }
-  100% { transform: scale(1.6); opacity: 0; }
-}
-
-.pulse-ring::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  border: 1px solid var(--accent);
-  animation: pulse-ring 0.7s ease-out;
-  pointer-events: none;
-}
-
 @keyframes shake {
   10%, 90% { transform: translateX(-1px); }
   20%, 80% { transform: translateX(2px); }
@@ -447,130 +445,34 @@ select {
   animation: breathe 3.2s ease-in-out infinite;
 }
 
-@keyframes float-soft {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+/* the running focus ring inhales and exhales slowly */
+@keyframes focus-breath {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.045); opacity: 0.95; }
 }
 
-.animate-float {
-  animation: float-soft 6s ease-in-out infinite;
+.focus-breath {
+  animation: focus-breath 4s ease-in-out infinite;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
 }
 
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
-/* ---------- Michael Jordan quote: delicate handwriting ---------- */
-
-.quote-stage {
-  position: relative;
-}
-
-.quote-hand {
-  margin: 0 auto;
-  max-width: 30ch;
-  font-family: var(--font-quote), cursive;
-  font-weight: 500;
-  font-size: clamp(30px, 6.6vw, 50px);
-  line-height: 1.18;
-  letter-spacing: 0.005em;
-  text-wrap: balance;
-  color: color-mix(in oklab, var(--fg) 90%, var(--accent));
-  text-shadow:
-    0 1px 0 color-mix(in oklab, var(--accent) 18%, transparent),
-    0 0 26px color-mix(in oklab, var(--accent) 30%, transparent);
-  /* the words appear as if being written, left to right */
-  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 45%, transparent 58%);
-  mask-image: linear-gradient(90deg, #000 0%, #000 45%, transparent 58%);
-  -webkit-mask-size: 260% 100%;
-  mask-size: 260% 100%;
-  -webkit-mask-position: 100% 0;
-  mask-position: 100% 0;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  animation: quote-write 3.4s cubic-bezier(0.4, 0.05, 0.25, 1) 0.4s forwards;
-}
-
-@keyframes quote-write {
-  to {
-    -webkit-mask-position: 0% 0;
-    mask-position: 0% 0;
-  }
-}
-
-.quote-by {
-  margin-top: 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  font-family: var(--font-quote), cursive;
-  font-weight: 500;
-  font-size: clamp(20px, 4.2vw, 26px);
-  color: var(--accent);
-  opacity: 0;
-  animation: quote-fade 1.2s ease-out 3s forwards;
-}
-
-@keyframes quote-fade {
-  to {
-    opacity: 0.9;
-  }
-}
-
-.quote-rule {
-  display: block;
-  width: 38px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent));
-}
-
-.quote-rule:last-child {
-  background: linear-gradient(90deg, var(--accent), transparent);
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .quote-hand {
-    animation: none;
-    -webkit-mask-image: none;
-    mask-image: none;
-  }
-  .quote-by {
-    animation: none;
-    opacity: 0.9;
-  }
-}
-
-/* Smoke puffs from the nostrils: drift down and outward, grow and fade. */
-.logo-smoke {
-  position: absolute;
-  width: 8%;
-  aspect-ratio: 1;
-  border-radius: 9999px;
-  z-index: 20;
-  pointer-events: none;
-  background: radial-gradient(circle, rgba(215, 215, 225, 0.85), rgba(215, 215, 225, 0) 70%);
-  opacity: 0;
-  animation: logo-smoke 2s ease-out infinite;
-}
-
-@keyframes logo-smoke {
-  0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
-  15% { opacity: 0.75; }
-  100% { opacity: 0; transform: translate(var(--drift, 0), 260%) scale(2.6); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .logo-smoke,
-  .aurora-blob,
   .animate-breathe,
-  .animate-float,
+  .focus-breath,
   .animate-ping,
   .animate-pulse,
-  .animate-shake,
-  .pulse-ring::after {
+  .animate-shake {
     animation: none !important;
   }
-  .clock-hand {
+  .clock-hand,
+  .clay-button {
     transition: none !important;
   }
   html {

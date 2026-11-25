@@ -150,19 +150,6 @@ async function main() {
     `);
 
     await dbPool.request().query(`
-      IF OBJECT_ID('dbo.Countdowns', 'U') IS NULL
-      BEGIN
-        CREATE TABLE dbo.Countdowns (
-          UserId INT NOT NULL PRIMARY KEY,
-          Title NVARCHAR(100) NULL,
-          TargetAt DATETIME2 NOT NULL,
-          UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-          CONSTRAINT FK_Countdowns_Users FOREIGN KEY (UserId) REFERENCES dbo.Users(Id) ON DELETE CASCADE
-        );
-      END
-    `);
-
-    await dbPool.request().query(`
       IF OBJECT_ID('dbo.NotionConnections', 'U') IS NULL
       BEGIN
         CREATE TABLE dbo.NotionConnections (
@@ -175,6 +162,53 @@ async function main() {
           CONSTRAINT FK_NotionConnections_Users FOREIGN KEY (UserId) REFERENCES dbo.Users(Id) ON DELETE CASCADE
         );
       END
+    `);
+
+    await dbPool.request().query(`
+      IF OBJECT_ID('dbo.Topics', 'U') IS NULL
+      BEGIN
+        CREATE TABLE dbo.Topics (
+          Id INT IDENTITY(1,1) PRIMARY KEY,
+          UserId INT NOT NULL,
+          Name NVARCHAR(40) NOT NULL,
+          Emoji NVARCHAR(16) NOT NULL,
+          ColorSlot TINYINT NOT NULL CHECK (ColorSlot BETWEEN 1 AND 8),
+          SortOrder INT NOT NULL DEFAULT 0,
+          ArchivedAt DATETIME2 NULL,
+          CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+          CONSTRAINT FK_Topics_Users FOREIGN KEY (UserId) REFERENCES dbo.Users(Id) ON DELETE CASCADE,
+          CONSTRAINT UQ_Topics_UserId_Name UNIQUE (UserId, Name)
+        );
+      END
+    `);
+
+    // TopicId has no cascade: SQL Server rejects multiple cascade paths from Users.
+    // Topics are archived, never deleted, so sessions always keep their topic.
+    await dbPool.request().query(`
+      IF OBJECT_ID('dbo.FocusSessions', 'U') IS NULL
+      BEGIN
+        CREATE TABLE dbo.FocusSessions (
+          Id BIGINT IDENTITY(1,1) PRIMARY KEY,
+          UserId INT NOT NULL,
+          TopicId INT NOT NULL,
+          Title NVARCHAR(200) NULL,
+          StartedAt DATETIME2 NOT NULL,
+          EndedAt DATETIME2 NULL,
+          Completed BIT NOT NULL DEFAULT 0,
+          Source NVARCHAR(10) NOT NULL DEFAULT 'timer' CHECK (Source IN ('timer','manual')),
+          CONSTRAINT FK_FocusSessions_Users FOREIGN KEY (UserId) REFERENCES dbo.Users(Id) ON DELETE CASCADE,
+          CONSTRAINT FK_FocusSessions_Topics FOREIGN KEY (TopicId) REFERENCES dbo.Topics(Id),
+          CONSTRAINT CK_FocusSessions_Range CHECK (EndedAt IS NULL OR EndedAt >= StartedAt)
+        );
+        CREATE INDEX IX_FocusSessions_UserId_StartedAt ON dbo.FocusSessions(UserId, StartedAt);
+        CREATE UNIQUE INDEX UX_FocusSessions_Running ON dbo.FocusSessions(UserId) WHERE EndedAt IS NULL;
+      END
+    `);
+
+    // Timed focus sessions count down from this many minutes (NULL = open-ended).
+    await dbPool.request().query(`
+      IF COL_LENGTH('dbo.FocusSessions', 'PlannedMinutes') IS NULL
+        ALTER TABLE dbo.FocusSessions ADD PlannedMinutes INT NULL;
     `);
 
     console.log("Tüm tablolar hazır.");

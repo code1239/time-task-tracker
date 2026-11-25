@@ -2,78 +2,74 @@
 
 import { memo } from "react";
 
-const TICKS = Array.from({ length: 60 }, (_, i) => i);
+const MINUTE_DOTS = Array.from({ length: 60 }, (_, i) => i).filter((i) => i % 5 !== 0);
+const HOURS = Array.from({ length: 12 }, (_, i) => i + 1);
 
-const NUMERALS = [
-  { value: "12", x: 120, y: 43 },
-  { value: "3", x: 197, y: 125 },
-  { value: "6", x: 120, y: 204 },
-  { value: "9", x: 43, y: 125 },
-];
+/** Point on a circle around (120, 120); 0 degrees is straight up. */
+const at = (deg: number, r: number) => {
+  const a = ((deg - 90) * Math.PI) / 180;
+  return { x: 120 + r * Math.cos(a), y: 120 + r * Math.sin(a) };
+};
 
 /**
- * The static dial: gradient, ticks and numerals. It never receives props, so it
- * renders exactly once and is never reconciled again by the parent clock.
+ * The static dial: a soft inner well, minute dots, bold hour pills and all twelve
+ * numerals. It never receives props, so it renders once and is never reconciled
+ * again by the parent clock.
  */
 export const ClockFace = memo(function ClockFace() {
   return (
-    <svg
-      viewBox="0 0 240 240"
-      aria-hidden="true"
-      focusable="false"
-      className="absolute inset-0 size-full"
-    >
+    <svg viewBox="0 0 240 240" aria-hidden="true" focusable="false" className="absolute inset-0 size-full">
       <defs>
-        <radialGradient id="clock-dial" cx="50%" cy="38%" r="70%">
-          <stop offset="0%" stopColor="var(--glass-strong)" />
-          <stop offset="100%" stopColor="var(--glass)" />
+        <radialGradient id="clock-well" cx="50%" cy="40%" r="70%">
+          <stop offset="0%" stopColor="var(--card)" />
+          <stop offset="100%" stopColor="var(--card-sunk)" />
         </radialGradient>
       </defs>
 
-      <circle
-        cx="120"
-        cy="120"
-        r="112"
-        fill="url(#clock-dial)"
-        stroke="var(--line-strong)"
-        strokeWidth="1"
-      />
-      <circle cx="120" cy="120" r="103" fill="none" stroke="var(--line)" strokeWidth="1" />
+      {/* pressed-in face */}
+      <circle cx="120" cy="120" r="108" fill="url(#clock-well)" stroke="var(--line)" strokeWidth="1" />
 
-      {TICKS.map((i) => {
-        const major = i % 5 === 0;
+      {MINUTE_DOTS.map((i) => {
+        const p = at(i * 6, 98);
+        return <circle key={i} cx={p.x} cy={p.y} r="1.3" fill="var(--faint)" opacity="0.75" />;
+      })}
+
+      {HOURS.map((h) => {
+        const quarter = h % 3 === 0;
+        const a = at(h * 30, 98);
+        const b = at(h * 30, quarter ? 87 : 90);
         return (
           <line
-            key={i}
-            x1="120"
-            y1={major ? 20 : 23}
-            x2="120"
-            y2={major ? 32 : 29}
-            stroke={major ? "var(--fg)" : "var(--muted)"}
-            strokeOpacity={major ? 0.7 : 0.35}
-            strokeWidth={major ? 1.6 : 1}
+            key={h}
+            x1={a.x}
+            y1={a.y}
+            x2={b.x}
+            y2={b.y}
+            stroke={quarter ? "var(--accent)" : "var(--muted)"}
+            strokeWidth={quarter ? 4 : 3}
             strokeLinecap="round"
-            transform={`rotate(${i * 6} 120 120)`}
           />
         );
       })}
 
-      {NUMERALS.map((n) => (
-        <text
-          key={n.value}
-          x={n.x}
-          y={n.y}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill="var(--muted)"
-          fontSize="11"
-          fontWeight="600"
-          fontFamily="var(--font-geist-mono)"
-          letterSpacing="0.5"
-        >
-          {n.value}
-        </text>
-      ))}
+      {HOURS.map((h) => {
+        const p = at(h * 30, 70);
+        return (
+          <text
+            key={h}
+            x={p.x}
+            y={p.y}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fill="var(--fg)"
+            fontSize={h % 3 === 0 ? 19 : 15}
+            fontWeight={h % 3 === 0 ? 700 : 600}
+            fontFamily="var(--font-display-face)"
+          >
+            {h}
+          </text>
+        );
+      })}
     </svg>
   );
 });

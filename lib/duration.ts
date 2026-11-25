@@ -1,4 +1,4 @@
-/** Geri sayım süresi ayrıştırma yardımcıları. Saf fonksiyonlar; DOM veya React yok. */
+/** Süre ayrıştırma yardımcıları (odak zamanlayıcının "süre belirle" alanı). Saf fonksiyonlar; DOM veya React yok. */
 
 export const MIN_MINUTES = 1;
 export const MAX_MINUTES = 24 * 60;
@@ -61,15 +61,6 @@ export function durationErrorMessage(error: DurationError): string {
     default:
       return "Süreyi anlayamadım. 1h 30m veya 90m gibi yazın.";
   }
-}
-
-/** 90 → "1h 30m", 45 → "45m", 120 → "2h" (form alanını doldurmak için). */
-export function formatDurationInput(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  if (hours && rest) return `${hours}h ${rest}m`;
-  if (hours) return `${hours}h`;
-  return `${rest}m`;
 }
 
 /** 90 → "1 sa 30 dk", 45 → "45 dk" (Türkçe kısa etiket). */

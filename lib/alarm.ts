@@ -111,6 +111,3 @@ export function stopAlarm() {
   live = [];
 }
 
-export function isAlarmRinging() {
-  return ringing;
-}

@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { query } from "@/lib/db";
-import { Dashboard } from "@/components/dashboard";
-import { isTabId } from "@/lib/tabs";
+import { AppShell } from "@/components/app-shell";
+import { resolveTab } from "@/lib/tabs";
 import type { Theme } from "@/components/theme-provider";
 
 export default async function HomePage({
@@ -14,7 +14,7 @@ export default async function HomePage({
   if (!session) redirect("/login");
 
   const { tab } = await searchParams;
-  const initialTab = typeof tab === "string" && isTabId(tab) ? tab : undefined;
+  const initialTab = typeof tab === "string" ? resolveTab(tab) : undefined;
 
   let themePreference: Theme | null = null;
   try {
@@ -27,7 +27,5 @@ export default async function HomePage({
     // The page still renders with the locally stored theme.
   }
 
-  return (
-    <Dashboard username={session.username} themePreference={themePreference} initialTab={initialTab} />
-  );
+  return <AppShell username={session.username} themePreference={themePreference} initialTab={initialTab} />;
 }
