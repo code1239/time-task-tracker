@@ -356,6 +356,19 @@ select {
   width: min(78vw, 44vh);
 }
 
+/* the dashboard card sizes the clock by height (xl:h-full); in fullscreen the
+   width rules above decide, and the dial stays square from its width */
+.clock-stage[data-fullscreen] .clock-stage__clock {
+  height: auto;
+  max-height: none;
+  aspect-ratio: auto;
+}
+
+.clock-stage[data-fullscreen] .clock-stage__clock > * {
+  width: 100%;
+  height: auto;
+}
+
 .clock-stage[data-fullscreen] .clock-hour,
 .clock-stage[data-fullscreen] .clock-minute,
 .clock-stage[data-fullscreen] .clock-second {
